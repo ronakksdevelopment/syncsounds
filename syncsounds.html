@@ -1,0 +1,3017 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SyncSounds — Sync Music, Anywhere</title>
+<meta name="description" content="Real-time P2P music sync across all your devices.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+/* ============================================================
+   SYNCSOUNDS — CSS CORE
+   Design: Deep cosmic dark + acid lime accent. Retro-futuristic.
+   ============================================================ */
+
+:root {
+  --bg-base:       #080B10;
+  --bg-surface:    #0E1219;
+  --bg-card:       #131923;
+  --bg-elevated:   #1A2233;
+  --bg-glass:      rgba(19,25,35,0.85);
+
+  --accent:        #A8FF3E;
+  --accent-dim:    rgba(168,255,62,0.15);
+  --accent-glow:   0 0 20px rgba(168,255,62,0.35), 0 0 60px rgba(168,255,62,0.12);
+  --accent2:       #3EFFC8;
+  --accent2-dim:   rgba(62,255,200,0.12);
+
+  --red:           #FF4757;
+  --red-dim:       rgba(255,71,87,0.15);
+  --amber:         #FFB830;
+  --amber-dim:     rgba(255,184,48,0.15);
+
+  --text-primary:  #F0F4FF;
+  --text-secondary:#8A99B3;
+  --text-muted:    #4A5568;
+  --text-inverse:  #080B10;
+
+  --border:        rgba(255,255,255,0.06);
+  --border-accent: rgba(168,255,62,0.3);
+
+  --radius-sm:     6px;
+  --radius-md:     12px;
+  --radius-lg:     20px;
+  --radius-xl:     28px;
+  --radius-full:   999px;
+
+  --transition:    all 0.22s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: all 0.45s cubic-bezier(0.4,0,0.2,1);
+
+  --shadow-card:   0 4px 24px rgba(0,0,0,0.4);
+  --shadow-glow:   0 0 40px rgba(168,255,62,0.2);
+
+  --header-h:      64px;
+  --footer-h:      72px;
+}
+
+[data-theme="light"] {
+  --bg-base:       #F0F2F7;
+  --bg-surface:    #E4E8F0;
+  --bg-card:       #FFFFFF;
+  --bg-elevated:   #F8FAFF;
+  --bg-glass:      rgba(255,255,255,0.88);
+
+  --accent:        #5A1FDB;
+  --accent-dim:    rgba(90,31,219,0.1);
+  --accent-glow:   0 0 20px rgba(90,31,219,0.2), 0 0 60px rgba(90,31,219,0.08);
+  --accent2:       #00A878;
+  --accent2-dim:   rgba(0,168,120,0.1);
+
+  --text-primary:  #0D1117;
+  --text-secondary:#4A5568;
+  --text-muted:    #9AA5B8;
+  --text-inverse:  #F0F4FF;
+
+  --border:        rgba(0,0,0,0.08);
+  --border-accent: rgba(90,31,219,0.3);
+
+  --shadow-card:   0 4px 24px rgba(0,0,0,0.1);
+  --shadow-glow:   0 0 40px rgba(90,31,219,0.12);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html { font-size:16px; scroll-behavior:smooth; }
+
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg-base);
+  color:var(--text-primary);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+/* Noise texture overlay */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:0.5;
+}
+
+/* Ambient radial glow */
+body::after {
+  content:'';
+  position:fixed;
+  width:600px;height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(168,255,62,0.04) 0%, transparent 70%);
+  top:-200px; right:-200px;
+  pointer-events:none;
+  z-index:0;
+  transition: background 0.35s ease;
+}
+[data-theme="light"] body::after {
+  background:radial-gradient(circle, rgba(90,31,219,0.06) 0%, transparent 70%);
+}
+
+/* ── SCROLLBAR ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--text-muted); border-radius:4px; }
+
+/* ── TYPOGRAPHY ────────────────────────────────────────────── */
+h1,h2,h3,h4,h5 { font-family:'Syne',sans-serif; font-weight:700; }
+
+/* ── UTILITY ───────────────────────────────────────────────── */
+.hidden { display:none !important; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+/* ── BUTTONS ───────────────────────────────────────────────── */
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 20px;
+  font-family:'DM Sans',sans-serif;
+  font-size:0.88rem; font-weight:500;
+  border:none; border-radius:var(--radius-full);
+  cursor:pointer;
+  transition:var(--transition);
+  outline:none;
+  white-space:nowrap;
+  position:relative; overflow:hidden;
+  text-decoration:none;
+}
+.btn::after {
+  content:'';
+  position:absolute;inset:0;
+  background:rgba(255,255,255,0);
+  transition:var(--transition);
+}
+.btn:hover::after { background:rgba(255,255,255,0.06); }
+.btn:active { transform:scale(0.97); }
+.btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+.btn-primary {
+  background:var(--accent);
+  color:var(--text-inverse);
+  font-weight:600;
+  box-shadow:var(--accent-glow);
+}
+.btn-primary:hover { box-shadow:var(--accent-glow), 0 8px 24px rgba(0,0,0,0.3); transform:translateY(-1px); }
+
+.btn-secondary {
+  background:var(--bg-elevated);
+  color:var(--text-primary);
+  border:1px solid var(--border);
+}
+.btn-secondary:hover { border-color:var(--border-accent); background:var(--accent-dim); }
+
+.btn-ghost {
+  background:transparent;
+  color:var(--text-secondary);
+  padding:8px 14px;
+}
+.btn-ghost:hover { color:var(--text-primary); background:var(--bg-elevated); }
+
+.btn-danger {
+  background:var(--red-dim);
+  color:var(--red);
+  border:1px solid rgba(255,71,87,0.2);
+}
+.btn-danger:hover { background:rgba(255,71,87,0.25); }
+
+.btn-sm { padding:6px 14px; font-size:0.8rem; }
+.btn-lg { padding:14px 32px; font-size:1rem; font-weight:600; }
+.btn-icon { padding:8px; border-radius:var(--radius-md); aspect-ratio:1; justify-content:center; }
+.btn-icon-round { padding:10px; border-radius:50%; aspect-ratio:1; justify-content:center; }
+
+/* ── INPUTS ────────────────────────────────────────────────── */
+.input {
+  width:100%;
+  padding:12px 16px;
+  background:var(--bg-elevated);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-md);
+  color:var(--text-primary);
+  font-family:'DM Sans',sans-serif;
+  font-size:0.95rem;
+  outline:none;
+  transition:var(--transition);
+}
+.input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+.input::placeholder { color:var(--text-muted); }
+.input-group { position:relative; display:flex; align-items:center; }
+.input-group .input { padding-right:48px; }
+.input-group .input-suffix {
+  position:absolute; right:12px;
+  color:var(--text-muted);
+  font-size:0.85rem;
+}
+
+/* ── CARD ──────────────────────────────────────────────────── */
+.card {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  padding:20px;
+  transition:var(--transition);
+}
+.card-glass {
+  background:var(--bg-glass);
+  backdrop-filter:blur(16px) saturate(1.4);
+  -webkit-backdrop-filter:blur(16px) saturate(1.4);
+}
+
+/* ── BADGE ─────────────────────────────────────────────────── */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px;
+  font-size:0.72rem; font-weight:600;
+  border-radius:var(--radius-full);
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.badge-accent  { background:var(--accent-dim); color:var(--accent); border:1px solid var(--border-accent); }
+.badge-green   { background:rgba(62,255,200,0.1); color:var(--accent2); border:1px solid rgba(62,255,200,0.2); }
+.badge-red     { background:var(--red-dim); color:var(--red); border:1px solid rgba(255,71,87,0.2); }
+.badge-amber   { background:var(--amber-dim); color:var(--amber); border:1px solid rgba(255,184,48,0.2); }
+
+/* ── TOAST ─────────────────────────────────────────────────── */
+#toast-container {
+  position:fixed;
+  bottom:24px; left:50%;
+  transform:translateX(-50%);
+  z-index:9999;
+  display:flex; flex-direction:column; gap:10px;
+  align-items:center;
+  pointer-events:none;
+}
+.toast {
+  padding:12px 20px;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-full);
+  font-size:0.875rem;
+  color:var(--text-primary);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  display:flex; align-items:center; gap:10px;
+  pointer-events:all;
+  animation:toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  backdrop-filter:blur(12px);
+}
+.toast.remove { animation:toastOut 0.25s ease forwards; }
+.toast i { font-size:1rem; }
+.toast.toast-success { border-color:rgba(62,255,200,0.3); color:var(--accent2); }
+.toast.toast-error   { border-color:rgba(255,71,87,0.3); color:var(--red); }
+.toast.toast-warn    { border-color:rgba(255,184,48,0.3); color:var(--amber); }
+.toast.toast-info    { border-color:var(--border-accent); color:var(--accent); }
+@keyframes toastIn  { from{opacity:0;transform:translateY(12px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes toastOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(6px) scale(0.95)} }
+
+/* ── MODAL ─────────────────────────────────────────────────── */
+.modal-overlay {
+  position:fixed;inset:0;
+  background:rgba(8,11,16,0.85);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+  animation:fadeIn 0.2s ease;
+}
+.modal-overlay.closing { animation:fadeOut 0.2s ease forwards; }
+@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+@keyframes fadeOut { from{opacity:1} to{opacity:0} }
+[data-theme="light"] .modal-overlay { background:rgba(240,242,247,0.85); }
+
+.modal {
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:32px;
+  width:100%; max-width:480px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.6);
+  animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(0.9) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.modal-title  { font-family:'Syne',sans-serif; font-size:1.3rem; }
+.modal-close  {
+  width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  color:var(--text-secondary);
+  transition:var(--transition);
+}
+.modal-close:hover { color:var(--red); border-color:rgba(255,71,87,0.3); }
+
+/* ── PROGRESS / RANGE ──────────────────────────────────────── */
+.progress-bar {
+  width:100%; height:4px;
+  background:var(--bg-elevated);
+  border-radius:var(--radius-full);
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+}
+.progress-bar .fill {
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:var(--radius-full);
+  transition:width 0.1s linear;
+  position:relative;
+}
+.progress-bar .fill::after {
+  content:'';
+  position:absolute;right:-4px;top:50%;
+  transform:translateY(-50%);
+  width:10px;height:10px;
+  background:var(--accent);
+  border-radius:50%;
+  box-shadow:0 0 8px var(--accent);
+  opacity:0;
+  transition:opacity 0.2s;
+}
+.progress-bar:hover .fill::after { opacity:1; }
+
+input[type="range"] {
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;height:4px;
+  background:var(--bg-elevated);
+  border-radius:var(--radius-full);
+  outline:none;cursor:pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:14px;height:14px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 8px var(--accent);
+  transition:var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform:scale(1.3); }
+input[type="range"]::-moz-range-thumb {
+  width:14px;height:14px;
+  border-radius:50%;
+  background:var(--accent);
+  border:none;
+  box-shadow:0 0 8px var(--accent);
+}
+
+/* ── TOGGLE SWITCH ─────────────────────────────────────────── */
+.toggle { display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+.toggle input { display:none; }
+.toggle-track {
+  width:42px;height:22px;
+  background:var(--bg-elevated);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-full);
+  position:relative;
+  transition:var(--transition);
+}
+.toggle-thumb {
+  width:16px;height:16px;
+  background:var(--text-muted);
+  border-radius:50%;
+  position:absolute; top:2px; left:2px;
+  transition:var(--transition);
+}
+.toggle input:checked ~ .toggle-track {
+  background:var(--accent-dim);
+  border-color:var(--border-accent);
+}
+.toggle input:checked ~ .toggle-track .toggle-thumb {
+  left:22px;
+  background:var(--accent);
+  box-shadow:0 0 8px var(--accent);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LANDING / SPLASH SCREEN
+══════════════════════════════════════════════════════════════ */
+#landing {
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:40px 20px;
+  position:relative; z-index:1;
+}
+
+.landing-logo {
+  display:flex; align-items:center; gap:14px;
+  margin-bottom:48px;
+  animation:slideDown 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+.landing-logo .logo-icon {
+  width:56px;height:56px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:var(--radius-lg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;
+  color:var(--text-inverse);
+  box-shadow:var(--accent-glow);
+}
+.landing-logo .logo-text {
+  font-family:'Syne',sans-serif;
+  font-size:2rem; font-weight:800;
+  letter-spacing:-0.02em;
+}
+.landing-logo .logo-text span { color:var(--accent); }
+
+.landing-headline {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2rem,6vw,3.5rem);
+  font-weight:800;
+  text-align:center;
+  line-height:1.15;
+  letter-spacing:-0.03em;
+  margin-bottom:16px;
+  animation:slideUp 0.6s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.landing-headline .hl { color:var(--accent); position:relative; }
+.landing-headline .hl::after {
+  content:'';
+  position:absolute; bottom:-4px; left:0; right:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:2px;
+}
+
+.landing-sub {
+  font-size:1.05rem;
+  color:var(--text-secondary);
+  text-align:center;
+  max-width:440px;
+  line-height:1.65;
+  margin-bottom:48px;
+  animation:slideUp 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.landing-cards {
+  display:flex; gap:16px; flex-wrap:wrap;
+  justify-content:center;
+  width:100%; max-width:560px;
+  margin-bottom:48px;
+  animation:slideUp 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.landing-choice-card {
+  flex:1; min-width:200px; max-width:250px;
+  background:var(--bg-card);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:28px 24px;
+  cursor:pointer;
+  transition:var(--transition);
+  text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+}
+.landing-choice-card:hover {
+  border-color:var(--border-accent);
+  background:var(--bg-elevated);
+  transform:translateY(-4px);
+  box-shadow:var(--shadow-glow);
+}
+.landing-choice-card .choice-icon {
+  width:56px;height:56px;
+  border-radius:var(--radius-lg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;
+}
+.landing-choice-card.create .choice-icon {
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:var(--text-inverse);
+  box-shadow:var(--accent-glow);
+}
+.landing-choice-card.join .choice-icon {
+  background:var(--bg-elevated);
+  color:var(--accent);
+  border:1.5px solid var(--border-accent);
+}
+.landing-choice-card .choice-title { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; }
+.landing-choice-card .choice-desc  { font-size:0.82rem; color:var(--text-muted); line-height:1.5; }
+
+.landing-features {
+  display:flex; gap:24px; flex-wrap:wrap;
+  justify-content:center;
+  animation:slideUp 0.6s 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.feat-pill {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 14px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-full);
+  font-size:0.8rem; color:var(--text-secondary);
+}
+.feat-pill i { color:var(--accent); font-size:0.85rem; }
+
+@keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* ══════════════════════════════════════════════════════════════
+   CREATE ROOM MODAL
+══════════════════════════════════════════════════════════════ */
+.room-code-display {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  margin:24px 0;
+}
+.room-code-display .code-char {
+  width:52px;height:60px;
+  background:var(--bg-elevated);
+  border:1.5px solid var(--border-accent);
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;
+  font-size:1.8rem; font-weight:800;
+  color:var(--accent);
+  box-shadow:0 0 12px var(--accent-dim);
+  animation:charPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.room-code-display .code-char:nth-child(1){animation-delay:0s}
+.room-code-display .code-char:nth-child(2){animation-delay:0.06s}
+.room-code-display .code-char:nth-child(3){animation-delay:0.12s}
+.room-code-display .code-char:nth-child(4){animation-delay:0.18s}
+.room-code-display .code-char:nth-child(5){animation-delay:0.24s}
+@keyframes charPop { from{opacity:0;transform:scale(0.5) rotateY(90deg)} to{opacity:1;transform:scale(1) rotateY(0)} }
+
+.room-code-actions {
+  display:flex; gap:10px; justify-content:center;
+  margin-bottom:16px;
+}
+
+.join-code-input {
+  text-align:center;
+  font-family:'Syne',sans-serif;
+  font-size:1.8rem; font-weight:800;
+  letter-spacing:0.25em;
+  text-transform:uppercase;
+  padding:16px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN APP SHELL
+══════════════════════════════════════════════════════════════ */
+#app {
+  display:flex; flex-direction:column;
+  min-height:100vh;
+  position:relative; z-index:1;
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+#header {
+  height:var(--header-h);
+  background:var(--bg-glass);
+  backdrop-filter:blur(20px) saturate(1.5);
+  -webkit-backdrop-filter:blur(20px) saturate(1.5);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  position:sticky; top:0; z-index:100;
+}
+.header-logo {
+  display:flex; align-items:center; gap:10px;
+  font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:800;
+  text-decoration:none; color:var(--text-primary);
+}
+.header-logo .logo-dot {
+  width:8px;height:8px;
+  background:var(--accent);
+  border-radius:50%;
+  box-shadow:0 0 8px var(--accent);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.4);opacity:0.7}
+}
+
+.header-room {
+  display:flex; align-items:center; gap:12px;
+}
+.room-code-badge {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 14px;
+  background:var(--bg-elevated);
+  border:1.5px solid var(--border-accent);
+  border-radius:var(--radius-full);
+  font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:700;
+  letter-spacing:0.12em;
+  color:var(--accent);
+  cursor:pointer;
+  transition:var(--transition);
+}
+.room-code-badge:hover { box-shadow:var(--accent-glow); }
+.room-code-badge i { font-size:0.75rem; }
+
+.peer-count-badge {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 12px;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-full);
+  font-size:0.82rem; color:var(--text-secondary);
+}
+.peer-dot {
+  width:6px;height:6px;
+  background:var(--accent2);
+  border-radius:50%;
+  box-shadow:0 0 6px var(--accent2);
+}
+
+.header-actions { display:flex; align-items:center; gap:8px; }
+.theme-toggle {
+  width:36px;height:36px;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  color:var(--text-secondary);
+  font-size:0.95rem;
+  transition:var(--transition);
+}
+.theme-toggle:hover { color:var(--accent); border-color:var(--border-accent); }
+
+/* ── MAIN LAYOUT ──────────────────────────────────────────── */
+#main {
+  flex:1;
+  display:grid;
+  grid-template-columns:280px 1fr 300px;
+  grid-template-rows:1fr auto;
+  overflow:hidden;
+  height:calc(100vh - var(--header-h) - var(--footer-h));
+}
+
+/* ── LEFT PANEL — PEERS ───────────────────────────────────── */
+#peers-panel {
+  background:var(--bg-surface);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  grid-row:1/3;
+}
+.panel-header {
+  padding:16px 20px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-title {
+  font-family:'Syne',sans-serif; font-size:0.82rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.08em;
+  color:var(--text-secondary);
+}
+
+.peers-list {
+  flex:1; overflow-y:auto;
+  padding:12px;
+  display:flex; flex-direction:column; gap:8px;
+}
+
+.peer-item {
+  display:flex; align-items:center; gap:12px;
+  padding:12px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  transition:var(--transition);
+  position:relative;
+  animation:peerIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes peerIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+.peer-item:hover { border-color:var(--border-accent); }
+.peer-item.is-host { border-color:var(--border-accent); }
+
+.peer-avatar {
+  width:38px;height:38px;
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem; font-weight:600;
+  flex-shrink:0;
+}
+.peer-avatar.host-av {
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:var(--text-inverse);
+  box-shadow:0 0 12px var(--accent-dim);
+}
+.peer-avatar.peer-av {
+  background:var(--bg-elevated);
+  color:var(--accent);
+  border:1.5px solid var(--border-accent);
+}
+
+.peer-info { flex:1; min-width:0; }
+.peer-name { font-size:0.9rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.peer-status-row { display:flex; align-items:center; gap:6px; margin-top:2px; }
+.peer-status { font-size:0.73rem; color:var(--text-muted); }
+.peer-status-dot {
+  width:6px;height:6px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.status-synced     { background:var(--accent2); box-shadow:0 0 6px var(--accent2); }
+.status-buffering  { background:var(--amber); box-shadow:0 0 6px var(--amber); animation:blink 1s infinite; }
+.status-disconnected { background:var(--red); }
+.status-pending    { background:var(--text-muted); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.peer-actions { display:flex; gap:4px; }
+.peer-vol-row { padding:8px 12px 12px; display:flex; align-items:center; gap:8px; }
+.peer-vol-row input[type="range"] { flex:1; }
+.peer-vol-label { font-size:0.75rem; color:var(--text-muted); min-width:32px; text-align:right; }
+
+.peer-item.pending-approval {
+  border-color:var(--amber);
+  box-shadow:0 0 12px var(--amber-dim);
+}
+.approval-actions { display:flex; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+
+/* ── CENTER PANEL — PLAYER ────────────────────────────────── */
+#player-panel {
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+
+.player-stage {
+  flex:1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 24px;
+  gap:24px;
+  overflow:hidden;
+  position:relative;
+}
+
+/* Album Art */
+.album-art-wrap {
+  position:relative;
+  width:clamp(160px,22vw,220px);
+  aspect-ratio:1;
+  flex-shrink:0;
+}
+.album-art-glow {
+  position:absolute; inset:-20px;
+  background:radial-gradient(circle at center, var(--accent-dim) 0%, transparent 70%);
+  border-radius:50%;
+  transition:var(--transition-slow);
+  animation:glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,100%{transform:scale(1);opacity:0.5}
+  50%{transform:scale(1.1);opacity:1}
+}
+.album-art {
+  width:100%;height:100%;
+  border-radius:var(--radius-xl);
+  object-fit:cover;
+  box-shadow:0 16px 48px rgba(0,0,0,0.5);
+  position:relative; z-index:1;
+  overflow:hidden;
+  background:var(--bg-elevated);
+  display:flex;align-items:center;justify-content:center;
+}
+.album-art .art-placeholder {
+  font-size:3.5rem; color:var(--text-muted);
+  animation:float 4s ease-in-out infinite;
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.album-art.playing { animation:vinylSpin 8s linear infinite; border-radius:50%; }
+.album-art.playing .art-placeholder { animation:none; }
+@keyframes vinylSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* Track Info */
+.track-info { text-align:center; max-width:400px; }
+.track-title {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.1rem,2.5vw,1.5rem);
+  font-weight:700;
+  margin-bottom:4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  max-width:100%;
+}
+.track-artist { font-size:0.9rem; color:var(--text-muted); }
+.track-source-badge { display:inline-flex; align-items:center; gap:6px; margin-top:8px; }
+
+/* Progress */
+.progress-section { width:100%; max-width:520px; }
+.time-row {
+  display:flex; justify-content:space-between;
+  font-size:0.78rem; color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+  margin-bottom:8px;
+}
+.seekbar { cursor:pointer; }
+
+/* Controls */
+.player-controls { display:flex; align-items:center; gap:12px; }
+
+.ctrl-btn {
+  width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:50%;
+  cursor:pointer;
+  color:var(--text-secondary);
+  font-size:1rem;
+  transition:var(--transition);
+  outline:none;
+}
+.ctrl-btn:hover { color:var(--text-primary); border-color:var(--border-accent); }
+.ctrl-btn.active { color:var(--accent); border-color:var(--border-accent); box-shadow:0 0 10px var(--accent-dim); }
+.ctrl-btn:focus-visible { outline:2px solid var(--accent); }
+
+.ctrl-btn.play-pause {
+  width:60px;height:60px;
+  font-size:1.3rem;
+  background:var(--accent);
+  color:var(--text-inverse);
+  border-color:transparent;
+  box-shadow:var(--accent-glow);
+}
+.ctrl-btn.play-pause:hover { transform:scale(1.08); box-shadow:var(--accent-glow),0 8px 24px rgba(0,0,0,0.4); }
+
+/* Volume */
+.volume-row {
+  display:flex; align-items:center; gap:10px;
+  width:100%; max-width:520px;
+}
+.volume-icon { color:var(--text-muted); font-size:0.9rem; width:20px; text-align:center; }
+.vol-pct { font-size:0.78rem; color:var(--text-muted); font-variant-numeric:tabular-nums; min-width:34px; text-align:right; }
+
+/* ── CANVAS VISUALIZER ────────────────────────────────────── */
+#visualizer-canvas {
+  width:100%; max-width:520px;
+  height:60px;
+  border-radius:var(--radius-md);
+  opacity:0.7;
+}
+
+/* ── QUEUE BAR ────────────────────────────────────────────── */
+#queue-bar {
+  background:var(--bg-surface);
+  border-top:1px solid var(--border);
+  padding:12px 20px;
+  min-height:80px;
+}
+.queue-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.queue-label {
+  font-family:'Syne',sans-serif; font-size:0.78rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.08em;
+  color:var(--text-secondary);
+  display:flex; align-items:center; gap:8px;
+}
+.queue-count { background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-full); padding:2px 8px; font-size:0.72rem; }
+.queue-scroll {
+  display:flex; gap:8px; overflow-x:auto;
+  padding-bottom:4px;
+}
+.queue-scroll::-webkit-scrollbar { height:2px; }
+
+.queue-item {
+  flex-shrink:0;
+  width:200px;
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  cursor:grab; transition:var(--transition);
+  position:relative;
+}
+.queue-item:active { cursor:grabbing; }
+.queue-item.playing-now { border-color:var(--border-accent); }
+.queue-item.dragging { opacity:0.4; }
+.queue-item.drag-over { border-color:var(--accent); box-shadow:0 0 8px var(--accent-dim); }
+.queue-item-art {
+  width:36px;height:36px;
+  border-radius:var(--radius-sm);
+  background:var(--bg-elevated);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted); font-size:0.9rem;
+  flex-shrink:0;
+  overflow:hidden;
+}
+.queue-item-art img { width:100%;height:100%;object-fit:cover; }
+.queue-item-info { flex:1; min-width:0; }
+.queue-item-title { font-size:0.82rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.queue-item-dur { font-size:0.72rem; color:var(--text-muted); margin-top:2px; }
+.queue-item-remove {
+  width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-elevated);
+  border-radius:4px;
+  cursor:pointer;
+  color:var(--text-muted);
+  font-size:0.7rem;
+  transition:var(--transition);
+  flex-shrink:0;
+  border:none;
+}
+.queue-item-remove:hover { color:var(--red); background:var(--red-dim); }
+
+.queue-empty {
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:8px 20px;
+  color:var(--text-muted); font-size:0.82rem; text-align:center;
+}
+
+.queue-add-btn {
+  flex-shrink:0;
+  width:200px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:8px 10px;
+  background:transparent;
+  border:1.5px dashed var(--border);
+  border-radius:var(--radius-md);
+  cursor:pointer;
+  color:var(--text-muted);
+  font-size:0.82rem;
+  transition:var(--transition);
+}
+.queue-add-btn:hover { border-color:var(--border-accent); color:var(--accent); background:var(--accent-dim); }
+.queue-full-msg { color:var(--amber); font-size:0.78rem; text-align:center; padding:4px; }
+
+/* ── RIGHT PANEL — CONTROLS ───────────────────────────────── */
+#controls-panel {
+  background:var(--bg-surface);
+  border-left:1px solid var(--border);
+  display:flex; flex-direction:column;
+  overflow-y:auto;
+  grid-row:1/3;
+}
+
+.control-section {
+  padding:16px;
+  border-bottom:1px solid var(--border);
+}
+.control-section-title {
+  font-family:'Syne',sans-serif; font-size:0.78rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.08em;
+  color:var(--text-secondary);
+  margin-bottom:14px;
+  display:flex; align-items:center; gap:8px;
+}
+.control-section-title i { font-size:0.85rem; color:var(--accent); }
+
+/* Source tabs */
+.source-tabs {
+  display:flex; gap:4px;
+  background:var(--bg-elevated);
+  border-radius:var(--radius-md);
+  padding:3px;
+  margin-bottom:14px;
+}
+.source-tab {
+  flex:1;
+  padding:8px;
+  background:transparent;
+  border:none;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  color:var(--text-muted);
+  font-size:0.8rem;
+  font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:var(--transition);
+  font-weight:500;
+}
+.source-tab.active {
+  background:var(--bg-card);
+  color:var(--text-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.2);
+}
+.source-tab:hover:not(.active) { color:var(--text-secondary); }
+
+.source-panel { display:none; }
+.source-panel.active { display:flex; flex-direction:column; gap:10px; }
+
+/* Drop zone */
+.drop-zone {
+  border:2px dashed var(--border);
+  border-radius:var(--radius-lg);
+  padding:28px 16px;
+  text-align:center;
+  cursor:pointer;
+  transition:var(--transition);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color:var(--accent);
+  background:var(--accent-dim);
+}
+.drop-zone i { font-size:2rem; color:var(--text-muted); }
+.drop-zone:hover i, .drop-zone.drag-over i { color:var(--accent); }
+.drop-zone p { font-size:0.82rem; color:var(--text-muted); }
+.drop-zone span { font-size:0.75rem; color:var(--text-muted); opacity:0.6; }
+#file-input { display:none; }
+
+.upload-progress {
+  background:var(--bg-elevated);
+  border-radius:var(--radius-md);
+  padding:10px 14px;
+  display:flex; align-items:center; gap:10px;
+  font-size:0.82rem;
+}
+.upload-progress .progress-bar { flex:1; }
+
+/* Link input */
+.link-input-wrap { display:flex; flex-direction:column; gap:8px; }
+.link-input-wrap .input-row { display:flex; gap:8px; }
+.link-input-wrap .input-row .input { flex:1; font-size:0.85rem; padding:10px 12px; }
+.link-note { font-size:0.73rem; color:var(--text-muted); line-height:1.4; }
+.link-note i { color:var(--amber); }
+
+/* Lock controls */
+.lock-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  margin-bottom:10px;
+}
+.lock-row-label { font-size:0.85rem; display:flex; align-items:center; gap:8px; }
+.lock-row-label i { color:var(--accent); }
+
+/* Audio box */
+.audio-box-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px;
+  background:linear-gradient(135deg, rgba(168,255,62,0.08), rgba(62,255,200,0.06));
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  user-select:none;
+}
+.audio-box-title {
+  display:flex; align-items:center; gap:10px;
+  font-family:'Syne',sans-serif; font-size:0.88rem; font-weight:700;
+}
+.audio-box-icon {
+  width:30px;height:30px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.8rem;
+  color:var(--text-inverse);
+}
+#audio-box-canvas {
+  width:100%;
+  height:80px;
+  border-radius:var(--radius-md);
+  background:var(--bg-elevated);
+  margin:10px 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════════════ */
+#footer {
+  height:var(--footer-h);
+  background:var(--bg-glass);
+  backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  position:sticky; bottom:0; z-index:100;
+}
+.footer-brand {
+  display:flex; align-items:center; gap:8px;
+  font-size:0.78rem; color:var(--text-muted);
+}
+.footer-brand i { color:var(--accent); }
+.footer-status { display:flex; align-items:center; gap:12px; font-size:0.78rem; color:var(--text-muted); }
+.footer-status .status-indicator { display:flex; align-items:center; gap:6px; }
+
+/* ══════════════════════════════════════════════════════════════
+   APPROVAL NOTIFICATION
+══════════════════════════════════════════════════════════════ */
+#approval-queue {
+  position:fixed;
+  top:80px; right:20px;
+  z-index:900;
+  display:flex; flex-direction:column; gap:10px;
+  max-width:300px;
+}
+.approval-card {
+  background:var(--bg-card);
+  border:1.5px solid var(--amber);
+  border-radius:var(--radius-lg);
+  padding:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 20px var(--amber-dim);
+  animation:slideInRight 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes slideInRight { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+.approval-card.removing { animation:slideOutRight 0.25s ease forwards; }
+@keyframes slideOutRight { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(20px)} }
+.approval-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.approval-avatar {
+  width:36px;height:36px;
+  background:var(--amber-dim);
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--amber); font-size:1rem;
+}
+.approval-info { flex:1; }
+.approval-title { font-size:0.88rem; font-weight:600; }
+.approval-sub { font-size:0.75rem; color:var(--text-muted); }
+.approval-timer-bar {
+  height:2px;
+  background:var(--bg-elevated);
+  border-radius:1px;
+  margin-bottom:10px;
+  overflow:hidden;
+}
+.approval-timer-fill {
+  height:100%;
+  background:var(--amber);
+  border-radius:1px;
+  animation:timerDrain 15s linear forwards;
+}
+@keyframes timerDrain { from{width:100%} to{width:0%} }
+.approval-btns { display:flex; gap:8px; }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET
+══════════════════════════════════════════════════════════════ */
+@media(max-width:1200px) {
+  #main { grid-template-columns:220px 1fr 260px; }
+}
+@media(max-width:1024px) {
+  #main {
+    grid-template-columns:1fr;
+    grid-template-rows:1fr auto auto;
+    height:auto;
+  }
+  #peers-panel { display:none; }
+  #controls-panel {
+    border-left:none;
+    border-top:1px solid var(--border);
+    max-height:none;
+    grid-row:auto;
+  }
+  #queue-bar { grid-column:1; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE
+══════════════════════════════════════════════════════════════ */
+@media(max-width:768px) {
+  :root { --header-h:56px; --footer-h:56px; }
+
+  #header { padding:0 14px; }
+  .header-logo span { display:none; }
+  .peer-count-badge { display:none; }
+
+  #main { height:auto; min-height:calc(100vh - var(--header-h) - var(--footer-h)); }
+
+  .player-stage { padding:20px 16px; gap:16px; }
+  .album-art-wrap { width:clamp(120px,50vw,180px); }
+  .track-title { font-size:1.1rem; }
+  .player-controls { gap:8px; }
+  .ctrl-btn { width:38px;height:38px;font-size:0.9rem; }
+  .ctrl-btn.play-pause { width:54px;height:54px;font-size:1.2rem; }
+
+  #queue-bar { padding:10px 14px; }
+  .queue-item { width:160px; }
+
+  #controls-panel { min-height:auto; }
+  .control-section { padding:12px; }
+
+  .landing-cards { gap:10px; }
+  .landing-choice-card { min-width:140px; padding:20px 16px; }
+
+  .modal { padding:24px 20px; border-radius:var(--radius-lg); }
+  .room-code-display .code-char { width:44px;height:52px;font-size:1.5rem; }
+
+  #approval-queue { right:10px; max-width:calc(100vw - 20px); }
+  #footer { padding:0 14px; }
+  .footer-status { gap:8px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LOADING SPINNER
+══════════════════════════════════════════════════════════════ */
+.spinner {
+  width:20px;height:20px;
+  border:2px solid var(--border);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+  display:inline-block;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── MISC ──────────────────────────────────────────────────── */
+.divider { height:1px; background:var(--border); margin:12px 0; }
+.label { font-size:0.78rem; font-weight:500; color:var(--text-secondary); margin-bottom:6px; display:block; }
+.text-accent { color:var(--accent); }
+.text-muted { color:var(--text-muted); }
+.text-sm { font-size:0.82rem; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.flex-center { display:flex; align-items:center; justify-content:center; }
+.gap-2 { gap:8px; }
+
+/* Peer awaiting conn */
+#waiting-state {
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px; padding:40px;
+  color:var(--text-muted); text-align:center;
+}
+#waiting-state .big-icon { font-size:3.5rem; color:var(--accent); animation:float 4s ease-in-out infinite; }
+#waiting-state h3 { font-family:'Syne',sans-serif; font-size:1.1rem; color:var(--text-primary); }
+
+/* YouTube embed */
+#yt-frame-wrap {
+  position:relative;
+  border-radius:var(--radius-md);
+  overflow:hidden;
+  background:var(--bg-elevated);
+  display:none;
+}
+#yt-frame-wrap iframe { display:block; width:100%; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+  LANDING SCREEN
+══════════════════════════════════════════════════════════════ -->
+<div id="landing">
+  <div class="landing-logo">
+    <div class="logo-icon"><i class="fa-solid fa-wave-square"></i></div>
+    <div class="logo-text">Sync<span>Sounds</span></div>
+  </div>
+
+  <h1 class="landing-headline">
+    Music in perfect<br><span class="hl">sync</span>, everywhere.
+  </h1>
+  <p class="landing-sub">
+    Connect multiple devices with one code. Share, control, and experience music together in real-time — no accounts, no installs.
+  </p>
+
+  <div class="landing-cards">
+    <div class="landing-choice-card create" id="btn-show-create">
+      <div class="choice-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+      <div>
+        <div class="choice-title">Create Room</div>
+        <div class="choice-desc">Host a new session and invite others with a code</div>
+      </div>
+    </div>
+    <div class="landing-choice-card join" id="btn-show-join">
+      <div class="choice-icon"><i class="fa-solid fa-plug"></i></div>
+      <div>
+        <div class="choice-title">Join Room</div>
+        <div class="choice-desc">Enter a 5-character code to connect and listen</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="landing-features">
+    <div class="feat-pill"><i class="fa-solid fa-bolt"></i>Real-time P2P</div>
+    <div class="feat-pill"><i class="fa-brands fa-youtube"></i>YouTube</div>
+    <div class="feat-pill"><i class="fa-brands fa-spotify"></i>Spotify</div>
+    <div class="feat-pill"><i class="fa-solid fa-music"></i>MP3 Upload</div>
+    <div class="feat-pill"><i class="fa-solid fa-mobile-screen"></i>Cross-device</div>
+    <div class="feat-pill"><i class="fa-solid fa-shield-halved"></i>Host Control</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+  MAIN APP (hidden until connected)
+══════════════════════════════════════════════════════════════ -->
+<div id="app" class="hidden">
+
+  <!-- HEADER -->
+  <header id="header" role="banner">
+    <a class="header-logo" href="#" id="logo-home" aria-label="SyncSounds home">
+      <div class="logo-dot" aria-hidden="true"></div>
+      <span style="font-family:'Syne',sans-serif;font-weight:800">SyncSounds</span>
+    </a>
+
+    <div class="header-room" id="header-room">
+      <div class="room-code-badge" id="room-code-display" title="Click to copy room code" tabindex="0" role="button" aria-label="Room code, click to copy">
+        <i class="fa-solid fa-hashtag"></i>
+        <span id="room-code-text">-----</span>
+      </div>
+      <div class="peer-count-badge" aria-live="polite" aria-label="Connected peers">
+        <div class="peer-dot"></div>
+        <span id="peer-count-label">0 peers</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="badge" id="role-badge" style="margin-right:4px">
+        <i class="fa-solid fa-crown"></i><span id="role-text">HOST</span>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">
+        <i class="fa-solid fa-moon" id="theme-icon"></i>
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-leave" title="Leave room">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div id="main" role="main">
+
+    <!-- LEFT: PEERS -->
+    <aside id="peers-panel" aria-label="Connected peers">
+      <div class="panel-header">
+        <span class="panel-title"><i class="fa-solid fa-users" style="margin-right:6px;color:var(--accent)"></i>Connections</span>
+        <div class="badge badge-green" id="live-count"><i class="fa-solid fa-circle" style="font-size:0.5rem"></i>Live</div>
+      </div>
+      <div class="peers-list" id="peers-list" role="list" aria-live="polite">
+        <!-- peer items injected here -->
+        <div id="no-peers-msg" style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">
+          <i class="fa-solid fa-satellite-dish" style="font-size:1.5rem;display:block;margin-bottom:8px;color:var(--text-muted)"></i>
+          Waiting for connections…<br>Share the room code!
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: PLAYER -->
+    <section id="player-panel" aria-label="Music player">
+      <div class="player-stage">
+
+        <!-- Album Art -->
+        <div class="album-art-wrap">
+          <div class="album-art-glow"></div>
+          <div class="album-art" id="album-art">
+            <div class="art-placeholder"><i class="fa-solid fa-compact-disc"></i></div>
+          </div>
+        </div>
+
+        <!-- Track Info -->
+        <div class="track-info">
+          <div class="track-title" id="track-title">No track loaded</div>
+          <div class="track-artist" id="track-artist">Add a track from the panel →</div>
+          <div class="track-source-badge">
+            <div class="badge badge-accent" id="track-source-badge" style="display:none">
+              <i class="fa-solid fa-music" id="source-icon"></i>
+              <span id="source-label">FILE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visualizer -->
+        <canvas id="visualizer-canvas" aria-hidden="true"></canvas>
+
+        <!-- Progress -->
+        <div class="progress-section">
+          <div class="time-row">
+            <span id="time-current">0:00</span>
+            <span id="time-total">0:00</span>
+          </div>
+          <div class="progress-bar seekbar" id="seekbar" role="slider" aria-label="Seek" tabindex="0">
+            <div class="fill" id="seekbar-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="player-controls">
+          <button class="ctrl-btn" id="btn-shuffle" title="Shuffle" aria-label="Shuffle">
+            <i class="fa-solid fa-shuffle"></i>
+          </button>
+          <button class="ctrl-btn" id="btn-prev" title="Previous" aria-label="Previous track">
+            <i class="fa-solid fa-backward-step"></i>
+          </button>
+          <button class="ctrl-btn play-pause" id="btn-play-pause" title="Play/Pause" aria-label="Play or Pause">
+            <i class="fa-solid fa-play" id="play-icon"></i>
+          </button>
+          <button class="ctrl-btn" id="btn-next" title="Next track" aria-label="Next track">
+            <i class="fa-solid fa-forward-step"></i>
+          </button>
+          <button class="ctrl-btn" id="btn-repeat" title="Repeat" aria-label="Repeat">
+            <i class="fa-solid fa-repeat"></i>
+          </button>
+        </div>
+
+        <!-- Volume -->
+        <div class="volume-row">
+          <div class="volume-icon"><i class="fa-solid fa-volume-low" id="vol-icon"></i></div>
+          <input type="range" min="0" max="100" value="80" id="volume-slider" aria-label="Master volume" style="flex:1">
+          <div class="vol-pct" id="vol-display">80%</div>
+        </div>
+
+      </div><!-- /player-stage -->
+
+      <!-- QUEUE BAR -->
+      <div id="queue-bar">
+        <div class="queue-header">
+          <div class="queue-label">
+            <i class="fa-solid fa-list-music" style="color:var(--accent)"></i>
+            Queue
+            <div class="queue-count"><span id="queue-count">0</span>/5</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-queue" title="Clear queue">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+        <div class="queue-scroll" id="queue-scroll" role="list" aria-label="Playback queue">
+          <div class="queue-empty" id="queue-empty">
+            <i class="fa-regular fa-music" style="font-size:1.3rem"></i>
+            Queue is empty — add tracks!
+          </div>
+        </div>
+      </div>
+
+    </section><!-- /player-panel -->
+
+    <!-- RIGHT: CONTROLS -->
+    <aside id="controls-panel" aria-label="Controls and sources">
+
+      <!-- HOST CONTROLS -->
+      <div class="control-section" id="host-controls-section">
+        <div class="control-section-title"><i class="fa-solid fa-sliders"></i>Host Controls</div>
+
+        <div class="lock-row">
+          <div class="lock-row-label"><i class="fa-solid fa-lock"></i>Lock Controls</div>
+          <label class="toggle" title="Lock controls to host only">
+            <input type="checkbox" id="lock-controls">
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+
+        <div style="margin-bottom:10px">
+          <div class="label"><i class="fa-solid fa-volume-high" style="margin-right:6px;color:var(--accent)"></i>Master Volume</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="range" min="0" max="100" value="80" id="master-vol-slider" aria-label="Master volume for all peers" style="flex:1">
+            <span class="text-muted text-sm" id="master-vol-display">80%</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" id="btn-mute-all">
+            <i class="fa-solid fa-microphone-slash"></i> Mute All
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-unmute-all">
+            <i class="fa-solid fa-microphone"></i> Unmute All
+          </button>
+          <button class="btn btn-danger btn-sm" id="btn-stop-all">
+            <i class="fa-solid fa-stop"></i> Stop All
+          </button>
+        </div>
+      </div>
+
+      <!-- AUDIO BOX -->
+      <div>
+        <div class="audio-box-header" id="audio-box-toggle" role="button" tabindex="0" aria-expanded="false" aria-controls="audio-box-body">
+          <div class="audio-box-title">
+            <div class="audio-box-icon"><i class="fa-solid fa-wave-square"></i></div>
+            Audio Box
+            <div class="badge badge-accent" style="font-size:0.68rem">VISUALIZER</div>
+          </div>
+          <i class="fa-solid fa-chevron-down" id="audio-box-chevron" style="color:var(--text-muted);transition:var(--transition)"></i>
+        </div>
+        <div id="audio-box-body" class="hidden" style="padding:12px 16px">
+          <canvas id="audio-box-canvas" aria-hidden="true"></canvas>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <label class="label" style="margin:0">Style:</label>
+            <select id="viz-style" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:4px 8px;font-size:0.8rem;outline:none">
+              <option value="bars">Bars</option>
+              <option value="wave">Wave</option>
+              <option value="circle">Circle</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD TRACK SOURCE -->
+      <div class="control-section">
+        <div class="control-section-title"><i class="fa-solid fa-circle-plus"></i>Add Track</div>
+
+        <div class="source-tabs" role="tablist" aria-label="Track sources">
+          <button class="source-tab active" data-tab="file" role="tab" aria-selected="true" aria-controls="tab-file">
+            <i class="fa-solid fa-file-audio"></i>File
+          </button>
+          <button class="source-tab" data-tab="youtube" role="tab" aria-selected="false" aria-controls="tab-youtube">
+            <i class="fa-brands fa-youtube"></i>YT
+          </button>
+          <button class="source-tab" data-tab="spotify" role="tab" aria-selected="false" aria-controls="tab-spotify">
+            <i class="fa-brands fa-spotify"></i>Spotify
+          </button>
+        </div>
+
+        <!-- FILE TAB -->
+        <div id="tab-file" class="source-panel active" role="tabpanel">
+          <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Click or drag to upload audio">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>Drag & drop audio files</p>
+            <span>MP3, WAV, OGG, FLAC, M4A, AAC</span>
+            <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="document.getElementById('file-input').click()">
+              <i class="fa-solid fa-folder-open"></i> Browse
+            </button>
+          </div>
+          <input type="file" id="file-input" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac,audio/*" multiple>
+          <div id="upload-progress-wrap" class="hidden upload-progress">
+            <span class="spinner"></span>
+            <div class="progress-bar" style="flex:1">
+              <div class="fill" id="upload-fill" style="width:0%"></div>
+            </div>
+            <span id="upload-pct" style="font-size:0.78rem;color:var(--text-muted);min-width:36px">0%</span>
+          </div>
+        </div>
+
+        <!-- YOUTUBE TAB -->
+        <div id="tab-youtube" class="source-panel" role="tabpanel">
+          <div class="link-input-wrap">
+            <div class="input-row">
+              <input class="input" type="url" id="yt-url" placeholder="youtube.com/watch?v=..." aria-label="YouTube URL">
+              <button class="btn btn-primary btn-sm" id="btn-add-yt"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="link-note">
+              <i class="fa-solid fa-circle-info"></i>
+              Supports youtube.com & youtu.be links. Playback depends on regional availability.
+            </div>
+          </div>
+          <div id="yt-frame-wrap">
+            <div id="yt-player"></div>
+          </div>
+        </div>
+
+        <!-- SPOTIFY TAB -->
+        <div id="tab-spotify" class="source-panel" role="tabpanel">
+          <div class="link-input-wrap">
+            <div class="input-row">
+              <input class="input" type="url" id="sp-url" placeholder="open.spotify.com/track/..." aria-label="Spotify URL">
+              <button class="btn btn-primary btn-sm" id="btn-add-sp" style="background:linear-gradient(135deg,#1DB954,#1AA34A)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="link-note">
+              <i class="fa-brands fa-spotify" style="color:#1DB954"></i>
+              Preview sync only. Full playback requires Spotify app.
+            </div>
+          </div>
+          <div id="spotify-embed-wrap" style="margin-top:8px;border-radius:var(--radius-md);overflow:hidden;display:none"></div>
+        </div>
+
+      </div><!-- /add track -->
+
+    </aside><!-- /controls-panel -->
+
+  </div><!-- /main -->
+
+  <!-- FOOTER -->
+  <footer id="footer" role="contentinfo">
+    <div class="footer-brand">
+      <i class="fa-solid fa-wave-square"></i>
+      <span>SyncSounds <span style="opacity:0.4">v1.0</span></span>
+    </div>
+    <div class="footer-status">
+      <div class="status-indicator">
+        <div class="peer-dot" id="footer-dot" style="background:var(--text-muted);box-shadow:none"></div>
+        <span id="footer-status-text">Initializing…</span>
+      </div>
+      <div class="badge badge-accent" id="sync-badge" style="display:none">
+        <i class="fa-solid fa-rotate"></i>Synced
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-ghost btn-sm" id="btn-peers-mobile" style="display:none" aria-label="Show peers">
+        <i class="fa-solid fa-users"></i>
+      </button>
+    </div>
+  </footer>
+
+</div><!-- /app -->
+
+<!-- APPROVAL QUEUE CONTAINER -->
+<div id="approval-queue" aria-live="assertive" aria-atomic="false"></div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+  MODALS
+══════════════════════════════════════════════════════════════ -->
+
+<!-- CREATE ROOM MODAL -->
+<div id="modal-create" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-create-title"><i class="fa-solid fa-tower-broadcast" style="color:var(--accent);margin-right:10px"></i>New Room</h2>
+      <div class="modal-close" id="close-modal-create" role="button" tabindex="0" aria-label="Close"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:8px">Share this code with others to invite them:</p>
+    <div class="room-code-display" id="create-code-display" aria-label="Room code"></div>
+    <div class="room-code-actions">
+      <button class="btn btn-secondary btn-sm" id="btn-copy-code"><i class="fa-regular fa-copy"></i> Copy</button>
+      <button class="btn btn-secondary btn-sm" id="btn-regen-code"><i class="fa-solid fa-rotate"></i> New Code</button>
+    </div>
+    <div class="divider"></div>
+    <div style="margin-bottom:16px">
+      <div class="label"><i class="fa-solid fa-user" style="margin-right:6px;color:var(--accent)"></i>Your Display Name</div>
+      <input class="input" type="text" id="host-name" placeholder="e.g. Alex (Host)" maxlength="20" value="Host">
+    </div>
+    <button class="btn btn-primary" style="width:100%" id="btn-create-room">
+      <i class="fa-solid fa-rocket"></i> Launch Room
+    </button>
+  </div>
+</div>
+
+<!-- JOIN ROOM MODAL -->
+<div id="modal-join" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-join-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-join-title"><i class="fa-solid fa-plug" style="color:var(--accent);margin-right:10px"></i>Join Room</h2>
+      <div class="modal-close" id="close-modal-join" role="button" tabindex="0" aria-label="Close"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:16px">Enter the 5-character room code:</p>
+    <input class="input join-code-input" type="text" id="join-code-input" placeholder="AB3K7" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="5-character room code">
+    <div style="margin-top:14px;margin-bottom:16px">
+      <div class="label"><i class="fa-solid fa-user" style="margin-right:6px;color:var(--accent)"></i>Your Display Name</div>
+      <input class="input" type="text" id="peer-name" placeholder="e.g. Jordan" maxlength="20" value="Listener">
+    </div>
+    <button class="btn btn-primary" style="width:100%" id="btn-join-room">
+      <i class="fa-solid fa-plug"></i> Connect
+    </button>
+    <div id="join-status" style="margin-top:12px;text-align:center;font-size:0.82rem;color:var(--text-muted)"></div>
+  </div>
+</div>
+
+<!-- HIDDEN AUDIO ELEMENT -->
+<audio id="audio-element" preload="metadata" crossorigin="anonymous"></audio>
+
+<!-- ══════════════════════════════════════════════════════════
+  JAVASCRIPT CORE
+══════════════════════════════════════════════════════════════ -->
+<script>
+// ================================================================
+// SYNCSOUNDS — JAVASCRIPT ENGINE
+// Dependencies: PeerJS (CDN), Font Awesome (CDN)
+// Architecture: Star topology — host hub, peers connect to host
+// Sync: RTCDataChannel JSON messages + clock offset compensation
+// ================================================================
+
+// ── CONFIG ──────────────────────────────────────────────────────
+const CONFIG = {
+  DEBUG:            false,
+  MAX_PEERS:        10,
+  MAX_QUEUE:        5,
+  HEARTBEAT_MS:     2000,
+  PEER_TIMEOUT_MS:  6000,
+  SYNC_BUFFER_MS:   300,
+  CLOCK_SAMPLES:    3,
+  MAX_FILE_MB:      80,
+  CODE_CHARS:       'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+  CODE_LEN:         5,
+  PEERJS_HOST:      '0.peerjs.com',
+  PEERJS_PORT:      443,
+  PEERJS_SECURE:    true,
+};
+
+const debug = (...a) => CONFIG.DEBUG && console.log('[SyncSounds]', ...a);
+
+// ── STATE ────────────────────────────────────────────────────────
+const S = {
+  isHost:         false,
+  roomCode:       null,
+  myName:         'User',
+  myId:           null,
+  peer:           null,         // PeerJS instance
+  hostConn:       null,         // peer→host connection
+  peerConns:      new Map(),    // host: peerId → { conn, name, status, volume, approved }
+  clockOffset:    0,
+  queue:          [],           // [{id, title, artist, src, duration, type, art}]
+  currentTrack:   null,
+  isPlaying:      false,
+  isShuffle:      false,
+  isRepeat:       false,
+  isMuted:        false,
+  volume:         0.8,
+  currentTime:    0,
+  duration:       0,
+  controlsLocked: false,
+  audioContext:   null,
+  analyser:       null,
+  audioSource:    null,
+  vizAnimId:      null,
+  vizStyle:       'bars',
+  heartbeatTimer: null,
+  peerTimers:     new Map(),    // peerId → last-pong timestamp
+  theme:          'dark',
+  ytPlayer:       null,
+  ytReady:        false,
+  spEmbedActive:  false,
+  trackIdCounter: 0,
+};
+
+// ── UTILITY ──────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if(cls) e.className=cls; if(html) e.innerHTML=html; return e; };
+const fmt = s => { s=Math.floor(s||0); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+const now = () => Date.now();
+const rand = n => Math.floor(Math.random() * n);
+
+function genCode() {
+  let c = '';
+  for(let i=0;i<CONFIG.CODE_LEN;i++) c += CONFIG.CODE_CHARS[rand(CONFIG.CODE_CHARS.length)];
+  return c;
+}
+
+function genName(i) { return `Device-${i}`; }
+
+// ── TOAST ────────────────────────────────────────────────────────
+function toast(msg, type='info', dur=3000) {
+  const icons = { success:'fa-circle-check', error:'fa-circle-xmark', warn:'fa-triangle-exclamation', info:'fa-circle-info' };
+  const t = el('div', `toast toast-${type}`);
+  t.innerHTML = `<i class="fa-solid ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  $('toast-container').appendChild(t);
+  setTimeout(() => { t.classList.add('remove'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ── THEME ────────────────────────────────────────────────────────
+function applyTheme(t) {
+  S.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  $('theme-icon').className = t === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+  localStorage.setItem('ss_theme', t);
+}
+
+$('theme-toggle').onclick = () => applyTheme(S.theme === 'dark' ? 'light' : 'dark');
+
+// ── MODALS ───────────────────────────────────────────────────────
+function openModal(id) {
+  const m = $(id);
+  m.classList.remove('hidden');
+  setTimeout(() => m.querySelector('.modal')?.focus?.(), 50);
+}
+function closeModal(id) {
+  const m = $(id);
+  m.classList.add('closing');
+  setTimeout(() => { m.classList.remove('closing'); m.classList.add('hidden'); }, 220);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) closeModal(m.id); });
+});
+document.querySelectorAll('.modal-close').forEach(b => {
+  const target = b.id.replace('close-', '');
+  b.onclick = () => closeModal(target);
+  b.onkeydown = e => e.key==='Enter' && closeModal(target);
+});
+
+// ── LANDING ──────────────────────────────────────────────────────
+let pendingCode = genCode();
+
+function renderCreateCode(code) {
+  const c = $('create-code-display');
+  c.innerHTML = '';
+  for(const ch of code) {
+    const d = el('div','code-char');
+    d.textContent = ch;
+    c.appendChild(d);
+  }
+}
+
+$('btn-show-create').onclick = () => {
+  pendingCode = genCode();
+  renderCreateCode(pendingCode);
+  openModal('modal-create');
+};
+
+$('btn-show-join').onclick = () => {
+  $('join-code-input').value = '';
+  openModal('modal-join');
+};
+
+$('btn-regen-code').onclick = () => {
+  pendingCode = genCode();
+  renderCreateCode(pendingCode);
+};
+
+$('btn-copy-code').onclick = () => {
+  navigator.clipboard.writeText(pendingCode).then(() => toast('Code copied!', 'success'));
+};
+
+$('room-code-display').onclick = () => {
+  if(S.roomCode) navigator.clipboard.writeText(S.roomCode).then(() => toast('Code copied!', 'success'));
+};
+$('room-code-display').onkeydown = e => { if(e.key==='Enter') $('room-code-display').click(); };
+
+// ── JOIN CODE INPUT ──────────────────────────────────────────────
+$('join-code-input').oninput = function() {
+  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+};
+
+// ── PEERJS INIT ──────────────────────────────────────────────────
+function initPeer(customId) {
+  return new Promise((resolve, reject) => {
+    const opts = {
+      host: CONFIG.PEERJS_HOST,
+      port: CONFIG.PEERJS_PORT,
+      secure: CONFIG.PEERJS_SECURE,
+      debug: CONFIG.DEBUG ? 2 : 0,
+    };
+    const p = customId ? new Peer(customId, opts) : new Peer(opts);
+    const timeout = setTimeout(() => reject(new Error('Connection timeout')), 12000);
+
+    p.on('open', id => {
+      clearTimeout(timeout);
+      S.peer = p;
+      S.myId = id;
+      debug('Peer opened:', id);
+      resolve(id);
+    });
+    p.on('error', e => {
+      clearTimeout(timeout);
+      debug('Peer error:', e.type, e.message);
+      reject(e);
+    });
+  });
+}
+
+// ── CREATE ROOM ───────────────────────────────────────────────────
+$('btn-create-room').onclick = async () => {
+  const name  = $('host-name').value.trim() || 'Host';
+  const code  = pendingCode;
+  const peerId = 'ss_' + code;
+
+  S.myName = name;
+  S.isHost = true;
+  S.roomCode = code;
+
+  const btn = $('btn-create-room');
+  btn.innerHTML = '<span class="spinner"></span> Launching…';
+  btn.disabled = true;
+
+  try {
+    await initPeer(peerId);
+    closeModal('modal-create');
+    launchApp();
+    setupHostListeners();
+    toast(`Room ${code} created!`, 'success');
+  } catch(e) {
+    toast('Failed to create room: ' + (e.type || e.message), 'error');
+    btn.innerHTML = '<i class="fa-solid fa-rocket"></i> Launch Room';
+    btn.disabled = false;
+  }
+};
+
+// ── JOIN ROOM ─────────────────────────────────────────────────────
+$('btn-join-room').onclick = async () => {
+  const code = $('join-code-input').value.trim().toUpperCase();
+  const name = $('peer-name').value.trim() || 'Listener';
+
+  if(code.length !== CONFIG.CODE_LEN) { toast('Enter a 5-character code', 'warn'); return; }
+
+  S.myName  = name;
+  S.isHost  = false;
+  S.roomCode = code;
+
+  const btn = $('btn-join-room');
+  const status = $('join-status');
+  btn.innerHTML = '<span class="spinner"></span> Connecting…';
+  btn.disabled = true;
+  status.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Reaching room…';
+
+  try {
+    await initPeer();
+    const hostId = 'ss_' + code;
+    const conn = S.peer.connect(hostId, {
+      metadata: { name: S.myName, id: S.myId },
+      reliable: true,
+    });
+
+    conn.on('open', () => {
+      S.hostConn = conn;
+      setupPeerDataChannel(conn);
+      sendToPeer(conn, { action:'JOIN_REQUEST', payload:{ name:S.myName, id:S.myId } });
+      status.innerHTML = '<i class="fa-solid fa-clock"></i> Awaiting host approval…';
+    });
+
+    conn.on('error', e => {
+      toast('Connection error: ' + e.message, 'error');
+      btn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect';
+      btn.disabled = false;
+      status.textContent = '';
+    });
+
+    conn.on('close', () => {
+      if(!$('app').classList.contains('hidden')) {
+        toast('Disconnected from host', 'warn');
+      }
+    });
+
+    S.peer.on('error', e => {
+      toast('Could not find room. Check the code.', 'error');
+      btn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect';
+      btn.disabled = false;
+      status.textContent = '';
+    });
+
+  } catch(e) {
+    toast('Could not connect: ' + (e.type || e.message), 'error');
+    btn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect';
+    btn.disabled = false;
+    status.textContent = '';
+  }
+};
+
+// ── LAUNCH APP UI ─────────────────────────────────────────────────
+function launchApp() {
+  $('landing').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('room-code-text').textContent = S.roomCode;
+  $('role-text').textContent = S.isHost ? 'HOST' : 'PEER';
+  $('role-badge').className = 'badge ' + (S.isHost ? 'badge-accent' : 'badge-green');
+  $('role-badge').querySelector('i').className = S.isHost ? 'fa-solid fa-crown' : 'fa-solid fa-user';
+  if(!S.isHost) {
+    $('host-controls-section').classList.add('hidden');
+  }
+  updateFooterStatus('connected');
+  initAudioContext();
+  startVisualizer($('visualizer-canvas'), 'bars', 'main');
+}
+
+// ── HOST: LISTEN FOR INCOMING CONNECTIONS ─────────────────────────
+function setupHostListeners() {
+  S.peer.on('connection', conn => {
+    debug('Incoming connection from:', conn.peer);
+    conn.on('open', () => {
+      conn.on('data', data => handleHostReceive(conn, data));
+    });
+    conn.on('error', e => debug('Conn error:', e));
+    conn.on('close', () => {
+      handlePeerDisconnect(conn.peer);
+    });
+  });
+}
+
+// HOST: RECEIVE DATA FROM PEER
+function handleHostReceive(conn, data) {
+  debug('Host received:', data.action, 'from', conn.peer);
+  switch(data.action) {
+    case 'JOIN_REQUEST':
+      handleJoinRequest(conn, data.payload);
+      break;
+    case 'PING':
+      sendToPeer(conn, { action:'PONG', payload:{ ts:data.payload.ts, serverTs:now() } });
+      break;
+    case 'CONTROL':
+      if(!S.controlsLocked) applyControl(data.payload, false);
+      break;
+    case 'QUEUE_ADD_REQUEST':
+      if(!S.controlsLocked && S.queue.length < CONFIG.MAX_QUEUE) {
+        const t = data.payload.track;
+        t.id = ++S.trackIdCounter;
+        S.queue.push(t);
+        broadcastExcept(conn.peer, { action:'QUEUE_SYNC', payload:{ queue: S.queue.map(sanitizeTrack) } });
+        renderQueue();
+      }
+      break;
+  }
+}
+
+// PEER: RECEIVE DATA FROM HOST
+function setupPeerDataChannel(conn) {
+  conn.on('data', data => {
+    debug('Peer received:', data.action);
+    switch(data.action) {
+      case 'JOIN_APPROVED':
+        handleJoinApproved(data.payload);
+        break;
+      case 'JOIN_DENIED':
+        toast('Host denied your connection request.', 'error', 5000);
+        $('btn-join-room').innerHTML = '<i class="fa-solid fa-plug"></i> Connect';
+        $('btn-join-room').disabled = false;
+        $('join-status').textContent = 'Request denied.';
+        break;
+      case 'KICKED':
+        toast('You were removed from the room by the host.', 'warn', 5000);
+        leaveRoom();
+        break;
+      case 'PONG':
+        handlePong(data.payload);
+        break;
+      case 'CONTROL':
+        applyControl(data.payload, true);
+        break;
+      case 'QUEUE_SYNC':
+        syncQueue(data.payload.queue);
+        break;
+      case 'STATE_SNAPSHOT':
+        applyStateSnapshot(data.payload);
+        break;
+      case 'PEER_LIST':
+        renderPeerListAsPeer(data.payload.peers);
+        break;
+      case 'VOLUME_OVERRIDE':
+        setLocalVolume(data.payload.volume);
+        break;
+    }
+  });
+}
+
+// ── JOIN REQUEST / APPROVAL ───────────────────────────────────────
+function handleJoinRequest(conn, payload) {
+  if(S.peerConns.size >= CONFIG.MAX_PEERS) {
+    sendToPeer(conn, { action:'JOIN_DENIED', payload:{ reason:'Room full' } });
+    return;
+  }
+
+  const peerId = conn.peer;
+  S.peerConns.set(peerId, {
+    conn, name: payload.name || genName(S.peerConns.size+1),
+    status:'pending', volume:80, approved:false, joinedAt:now()
+  });
+
+  showApprovalCard(peerId, payload.name);
+}
+
+function showApprovalCard(peerId, name) {
+  const card = el('div','approval-card');
+  card.id = 'approval_' + peerId;
+  card.innerHTML = `
+    <div class="approval-header">
+      <div class="approval-avatar"><i class="fa-solid fa-user-plus"></i></div>
+      <div class="approval-info">
+        <div class="approval-title">${escHtml(name)} wants to join</div>
+        <div class="approval-sub">Auto-denies in 15s</div>
+      </div>
+    </div>
+    <div class="approval-timer-bar"><div class="approval-timer-fill"></div></div>
+    <div class="approval-btns">
+      <button class="btn btn-primary btn-sm" style="flex:1" onclick="approveJoin('${peerId}')">
+        <i class="fa-solid fa-check"></i> Allow
+      </button>
+      <button class="btn btn-danger btn-sm" style="flex:1" onclick="denyJoin('${peerId}')">
+        <i class="fa-solid fa-xmark"></i> Deny
+      </button>
+    </div>`;
+  $('approval-queue').appendChild(card);
+
+  // Auto-deny after 15s
+  setTimeout(() => { if(!S.peerConns.get(peerId)?.approved) denyJoin(peerId); }, 15000);
+}
+
+function approveJoin(peerId) {
+  const peer = S.peerConns.get(peerId);
+  if(!peer) return;
+  peer.approved = true;
+  peer.status = 'synced';
+  removeApprovalCard(peerId);
+
+  // Send approval with state snapshot
+  sendToPeer(peer.conn, {
+    action:'JOIN_APPROVED',
+    payload:{ name: peer.name, roomCode: S.roomCode }
+  });
+
+  // Send current state
+  setTimeout(() => {
+    sendToPeer(peer.conn, {
+      action:'STATE_SNAPSHOT',
+      payload:{
+        queue: S.queue.map(sanitizeTrack),
+        currentTrack: S.currentTrack ? sanitizeTrack(S.currentTrack) : null,
+        isPlaying: S.isPlaying,
+        currentTime: S.currentTime,
+        volume: S.volume,
+        controlsLocked: S.controlsLocked,
+        hostTs: now(),
+      }
+    });
+    broadcastPeerList();
+  }, 300);
+
+  renderPeerList();
+  updatePeerCountBadge();
+  startHeartbeat(peerId);
+  toast(`${peer.name} joined the room`, 'success');
+}
+
+function denyJoin(peerId) {
+  const peer = S.peerConns.get(peerId);
+  if(!peer) return;
+  if(!peer.approved) {
+    sendToPeer(peer.conn, { action:'JOIN_DENIED', payload:{} });
+    peer.conn.close();
+    S.peerConns.delete(peerId);
+  }
+  removeApprovalCard(peerId);
+}
+
+function removeApprovalCard(peerId) {
+  const c = $('approval_' + peerId);
+  if(!c) return;
+  c.classList.add('removing');
+  setTimeout(() => c.remove(), 280);
+}
+
+function handleJoinApproved(payload) {
+  closeModal('modal-join');
+  launchApp();
+  toast(`Connected to room ${S.roomCode}!`, 'success');
+  startPeerHeartbeat();
+}
+
+function handlePeerDisconnect(peerId) {
+  const peer = S.peerConns.get(peerId);
+  if(peer) {
+    const name = peer.name;
+    S.peerConns.delete(peerId);
+    clearTimeout(S.peerTimers.get(peerId));
+    S.peerTimers.delete(peerId);
+    renderPeerList();
+    updatePeerCountBadge();
+    broadcastPeerList();
+    toast(`${name} disconnected`, 'warn');
+  }
+}
+
+// ── PEER LIST ─────────────────────────────────────────────────────
+function renderPeerList() {
+  const list = $('peers-list');
+  list.innerHTML = '';
+
+  // Host entry (self)
+  const hostItem = el('div','peer-item is-host');
+  hostItem.setAttribute('role','listitem');
+  hostItem.innerHTML = `
+    <div class="peer-avatar host-av"><i class="fa-solid fa-crown"></i></div>
+    <div class="peer-info">
+      <div class="peer-name">${escHtml(S.myName)} <span style="font-size:0.7rem;color:var(--accent)">(you)</span></div>
+      <div class="peer-status-row">
+        <div class="peer-status-dot status-synced"></div>
+        <div class="peer-status">Host · Synced</div>
+      </div>
+    </div>`;
+  list.appendChild(hostItem);
+
+  if(S.peerConns.size === 0) {
+    const msg = el('div');
+    msg.id = 'no-peers-msg';
+    msg.style.cssText = 'padding:16px;text-align:center;color:var(--text-muted);font-size:0.82rem;';
+    msg.innerHTML = `<i class="fa-solid fa-satellite-dish" style="font-size:1.3rem;display:block;margin-bottom:6px"></i>Waiting for connections…`;
+    list.appendChild(msg);
+    return;
+  }
+
+  S.peerConns.forEach((peer, peerId) => {
+    if(!peer.approved) return;
+    const item = el('div','peer-item');
+    item.setAttribute('role','listitem');
+    item.setAttribute('data-peerid', peerId);
+    const statusClass = { synced:'status-synced', buffering:'status-buffering', disconnected:'status-disconnected' }[peer.status] || 'status-pending';
+    item.innerHTML = `
+      <div class="peer-avatar peer-av">${peer.name.charAt(0).toUpperCase()}</div>
+      <div class="peer-info">
+        <div class="peer-name">${escHtml(peer.name)}</div>
+        <div class="peer-status-row">
+          <div class="peer-status-dot ${statusClass}"></div>
+          <div class="peer-status">${peer.status}</div>
+        </div>
+      </div>
+      <div class="peer-actions">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="kickPeer('${peerId}')" title="Remove ${escHtml(peer.name)}" aria-label="Remove ${escHtml(peer.name)}">
+          <i class="fa-solid fa-user-minus" style="color:var(--red)"></i>
+        </button>
+      </div>`;
+
+    // Per-peer volume
+    const volRow = el('div','peer-vol-row');
+    volRow.innerHTML = `
+      <i class="fa-solid fa-volume-low" style="color:var(--text-muted);font-size:0.8rem"></i>
+      <input type="range" min="0" max="100" value="${peer.volume}" aria-label="Volume for ${escHtml(peer.name)}"
+        oninput="setPeerVolume('${peerId}', this.value, this.nextElementSibling)">
+      <div class="peer-vol-label">${peer.volume}%</div>`;
+    item.appendChild(volRow);
+    list.appendChild(item);
+  });
+}
+
+function renderPeerListAsPeer(peers) {
+  const list = $('peers-list');
+  list.innerHTML = '';
+  peers.forEach((p, i) => {
+    const item = el('div','peer-item' + (p.isHost ? ' is-host':''));
+    item.setAttribute('role','listitem');
+    item.innerHTML = `
+      <div class="peer-avatar ${p.isHost?'host-av':'peer-av'}">${p.isHost ? '<i class="fa-solid fa-crown"></i>' : p.name.charAt(0).toUpperCase()}</div>
+      <div class="peer-info">
+        <div class="peer-name">${escHtml(p.name)}${p.isMe?' <span style="font-size:0.7rem;color:var(--accent)">(you)</span>':''}</div>
+        <div class="peer-status-row">
+          <div class="peer-status-dot status-synced"></div>
+          <div class="peer-status">${p.isHost?'Host':'Listener'}</div>
+        </div>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function broadcastPeerList() {
+  const peers = [{ name: S.myName, isHost:true }];
+  S.peerConns.forEach((p,id) => {
+    if(p.approved) peers.push({ name:p.name, id, isHost:false });
+  });
+  broadcastAll({ action:'PEER_LIST', payload:{ peers } });
+}
+
+function updatePeerCountBadge() {
+  const count = S.isHost ? S.peerConns.size : 0;
+  $('peer-count-label').textContent = count === 1 ? '1 peer' : `${count} peers`;
+}
+
+// ── KICK PEER ─────────────────────────────────────────────────────
+function kickPeer(peerId) {
+  const peer = S.peerConns.get(peerId);
+  if(!peer) return;
+  sendToPeer(peer.conn, { action:'KICKED', payload:{} });
+  setTimeout(() => peer.conn.close(), 200);
+  S.peerConns.delete(peerId);
+  clearTimeout(S.peerTimers.get(peerId));
+  S.peerTimers.delete(peerId);
+  renderPeerList();
+  updatePeerCountBadge();
+  broadcastPeerList();
+  toast(`Removed ${peer.name}`, 'info');
+}
+
+// ── PER-PEER VOLUME ───────────────────────────────────────────────
+function setPeerVolume(peerId, vol, labelEl) {
+  const peer = S.peerConns.get(peerId);
+  if(!peer) return;
+  peer.volume = parseInt(vol);
+  if(labelEl) labelEl.textContent = vol + '%';
+  sendToPeer(peer.conn, { action:'VOLUME_OVERRIDE', payload:{ volume: peer.volume/100 } });
+}
+
+function setLocalVolume(v) {
+  S.volume = v;
+  $('audio-element').volume = v;
+  $('volume-slider').value = Math.round(v * 100);
+  $('vol-display').textContent = Math.round(v*100) + '%';
+  updateVolIcon(v);
+}
+
+// ── MESSAGING ────────────────────────────────────────────────────
+function sendToPeer(conn, msg) {
+  try { if(conn && conn.open) conn.send({ ...msg, ts: now() }); }
+  catch(e) { debug('Send error:', e); }
+}
+
+function broadcastAll(msg) {
+  S.peerConns.forEach(p => { if(p.approved) sendToPeer(p.conn, msg); });
+}
+function broadcastExcept(excludeId, msg) {
+  S.peerConns.forEach((p,id) => { if(p.approved && id !== excludeId) sendToPeer(p.conn, msg); });
+}
+function sendToHost(msg) {
+  if(S.hostConn) sendToPeer(S.hostConn, msg);
+}
+
+// ── HEARTBEAT ────────────────────────────────────────────────────
+function startHeartbeat(peerId) {
+  S.peerTimers.set(peerId, now());
+  // Host pings each peer
+}
+
+function startPeerHeartbeat() {
+  clearInterval(S.heartbeatTimer);
+  S.heartbeatTimer = setInterval(() => {
+    sendToHost({ action:'PING', payload:{ ts: now() } });
+  }, CONFIG.HEARTBEAT_MS);
+}
+
+function handlePong(payload) {
+  const rtt = now() - payload.ts;
+  S.clockOffset = payload.serverTs - payload.ts + rtt/2;
+  debug('RTT:', rtt, 'Offset:', S.clockOffset);
+}
+
+// ── STATE SNAPSHOT (peer joins mid-session) ───────────────────────
+function applyStateSnapshot(snap) {
+  if(snap.queue) syncQueue(snap.queue);
+  S.controlsLocked = snap.controlsLocked;
+  if(snap.currentTrack) {
+    S.currentTrack = snap.currentTrack;
+    updatePlayerTrackInfo(snap.currentTrack);
+    S.duration = snap.currentTrack.duration || 0;
+    $('time-total').textContent = fmt(S.duration);
+  }
+  if(snap.isPlaying) {
+    const adjustedTime = snap.currentTime + (now() - snap.hostTs)/1000;
+    $('audio-element').currentTime = adjustedTime;
+    $('audio-element').play().catch(()=>{});
+    S.isPlaying = true;
+    updatePlayBtn(true);
+  }
+  setLocalVolume(snap.volume);
+}
+
+// ── CONTROL BROADCAST ────────────────────────────────────────────
+function broadcastControl(payload) {
+  const msg = { action:'CONTROL', payload, ts:now() };
+  broadcastAll(msg);
+}
+
+function applyControl(payload, fromHost) {
+  debug('applyControl:', payload.type, fromHost);
+  switch(payload.type) {
+    case 'PLAY':
+      const aud = $('audio-element');
+      if(payload.time !== undefined) aud.currentTime = payload.time + (fromHost ? S.clockOffset/1000 : 0);
+      aud.play().catch(()=>{});
+      S.isPlaying = true;
+      updatePlayBtn(true);
+      break;
+    case 'PAUSE':
+      $('audio-element').pause();
+      S.isPlaying = false;
+      updatePlayBtn(false);
+      break;
+    case 'SEEK':
+      setTimeout(() => { $('audio-element').currentTime = payload.time; }, CONFIG.SYNC_BUFFER_MS);
+      break;
+    case 'VOLUME':
+      setLocalVolume(payload.volume);
+      break;
+    case 'NEXT':
+      playNext();
+      break;
+    case 'PREV':
+      playPrev();
+      break;
+    case 'STOP':
+      $('audio-element').pause();
+      $('audio-element').currentTime = 0;
+      S.isPlaying = false;
+      updatePlayBtn(false);
+      break;
+    case 'LOCK':
+      S.controlsLocked = payload.locked;
+      break;
+    case 'QUEUE_SYNC':
+      syncQueue(payload.queue);
+      break;
+  }
+}
+
+// ── AUDIO CONTEXT & VISUALIZER ────────────────────────────────────
+function initAudioContext() {
+  try {
+    S.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    S.analyser    = S.audioContext.createAnalyser();
+    S.analyser.fftSize = 256;
+    const audioEl = $('audio-element');
+    if(!S.audioSource) {
+      S.audioSource = S.audioContext.createMediaElementSource(audioEl);
+      S.audioSource.connect(S.analyser);
+      S.analyser.connect(S.audioContext.destination);
+    }
+  } catch(e) { debug('AudioContext error:', e); }
+}
+
+function resumeAudioCtx() {
+  if(S.audioContext && S.audioContext.state === 'suspended') S.audioContext.resume();
+}
+
+function startVisualizer(canvas, style, key) {
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const bufLen = S.analyser ? S.analyser.frequencyBinCount : 64;
+  const data   = new Uint8Array(bufLen);
+
+  function draw() {
+    requestAnimationFrame(draw);
+    canvas.width  = canvas.offsetWidth || canvas.width;
+    canvas.height = canvas.offsetHeight || canvas.height;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    if(S.analyser) S.analyser.getByteFrequencyData(data);
+    else for(let i=0;i<bufLen;i++) data[i] = 0;
+
+    const theme  = document.documentElement.getAttribute('data-theme');
+    const accent = theme==='light' ? '#5A1FDB' : '#A8FF3E';
+    const accent2= theme==='light' ? '#00A878' : '#3EFFC8';
+
+    const vstyle = key==='main' ? style : $('viz-style').value;
+
+    if(vstyle === 'wave') {
+      if(S.analyser) S.analyser.getByteTimeDomainData(data);
+      ctx.beginPath();
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      const sliceW = W / bufLen;
+      let x = 0;
+      for(let i=0;i<bufLen;i++) {
+        const v = data[i]/128;
+        const y = v * H/2;
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+        x += sliceW;
+      }
+      ctx.stroke();
+
+    } else if(vstyle === 'circle') {
+      const cx=W/2, cy=H/2, r=Math.min(W,H)*0.3;
+      for(let i=0;i<bufLen;i++) {
+        const angle = (i/bufLen)*Math.PI*2 - Math.PI/2;
+        const mag   = data[i]/255 * r * 0.8;
+        const x1=cx+Math.cos(angle)*r, y1=cy+Math.sin(angle)*r;
+        const x2=cx+Math.cos(angle)*(r+mag), y2=cy+Math.sin(angle)*(r+mag);
+        const grad = ctx.createLinearGradient(x1,y1,x2,y2);
+        grad.addColorStop(0,accent+'88');
+        grad.addColorStop(1,accent2);
+        ctx.beginPath();
+        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+        ctx.strokeStyle=grad; ctx.lineWidth=2; ctx.stroke();
+      }
+
+    } else { // bars
+      const barW = (W/bufLen)*1.8;
+      for(let i=0;i<bufLen;i++) {
+        const barH = (data[i]/255)*H;
+        const x    = i*(W/bufLen);
+        const t    = i/bufLen;
+        const r_   = parseInt(accent.slice(1,3),16)*(1-t) + parseInt(accent2.slice(1,3),16)*t;
+        const g_   = parseInt(accent.slice(3,5),16)*(1-t) + parseInt(accent2.slice(3,5),16)*t;
+        const b_   = parseInt(accent.slice(5,7),16)*(1-t) + parseInt(accent2.slice(5,7),16)*t;
+        ctx.fillStyle = `rgba(${r_|0},${g_|0},${b_|0},0.85)`;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(x, H-barH, barW, barH, [2,2,0,0]) : ctx.rect(x, H-barH, barW, barH);
+        ctx.fill();
+      }
+    }
+  }
+  draw();
+}
+
+// ── AUDIO PLAYER ─────────────────────────────────────────────────
+const audioEl = $('audio-element');
+
+function loadTrack(track, autoplay) {
+  S.currentTrack = track;
+  updatePlayerTrackInfo(track);
+  if(track.type === 'file' && track.blobUrl) {
+    audioEl.src = track.blobUrl;
+    audioEl.load();
+    if(autoplay) { resumeAudioCtx(); audioEl.play().catch(()=>{}); }
+  } else if(track.type === 'youtube') {
+    // YouTube: controlled via YT API
+    if(S.ytPlayer && S.ytReady) {
+      S.ytPlayer.loadVideoById(track.ytId);
+    }
+  } else if(track.type === 'spotify') {
+    // Spotify embed loaded externally
+  }
+  $('album-art').querySelector('.art-placeholder')?.classList.remove('hidden');
+}
+
+function updatePlayerTrackInfo(track) {
+  if(!track) return;
+  $('track-title').textContent  = track.title   || 'Unknown Track';
+  $('track-artist').textContent = track.artist  || 'Unknown Artist';
+  $('time-total').textContent   = fmt(track.duration);
+  $('time-current').textContent = '0:00';
+  $('seekbar-fill').style.width = '0%';
+
+  const sourceMap = {
+    file:    { icon:'fa-file-audio',   label:'FILE',    color:'' },
+    youtube: { icon:'fa-brands fa-youtube', label:'YOUTUBE', color:'color:#FF0000' },
+    spotify: { icon:'fa-brands fa-spotify', label:'SPOTIFY', color:'color:#1DB954' },
+  };
+  const sm = sourceMap[track.type] || sourceMap.file;
+  $('source-icon').className = 'fa-solid ' + sm.icon;
+  $('source-icon').style.cssText = sm.color;
+  $('source-label').textContent = sm.label;
+  $('track-source-badge').style.display = 'inline-flex';
+
+  if(track.art) {
+    const artDiv = $('album-art');
+    artDiv.innerHTML = `<img src="${track.art}" alt="Album art" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+  } else {
+    $('album-art').innerHTML = `<div class="art-placeholder"><i class="fa-solid fa-compact-disc"></i></div>`;
+  }
+}
+
+// Play/Pause
+$('btn-play-pause').onclick = () => {
+  resumeAudioCtx();
+  if(!S.currentTrack && S.queue.length > 0) { dequeueAndPlay(0); return; }
+  if(!S.currentTrack) { toast('Add a track first!', 'warn'); return; }
+
+  if(S.isPlaying) {
+    audioEl.pause();
+    S.isPlaying = false;
+    updatePlayBtn(false);
+    if(S.isHost) broadcastControl({ type:'PAUSE' });
+    else sendToHost({ action:'CONTROL', payload:{ type:'PAUSE' } });
+  } else {
+    audioEl.play().catch(e => toast('Playback error: '+e.message,'error'));
+    S.isPlaying = true;
+    updatePlayBtn(true);
+    if(S.isHost) broadcastControl({ type:'PLAY', time: audioEl.currentTime });
+    else sendToHost({ action:'CONTROL', payload:{ type:'PLAY', time: audioEl.currentTime } });
+  }
+};
+
+function updatePlayBtn(playing) {
+  const icon = $('play-icon');
+  icon.className = playing ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+  const artDiv = $('album-art');
+  if(playing) {
+    artDiv.style.animation = 'vinylSpin 8s linear infinite';
+    artDiv.style.borderRadius = '50%';
+  } else {
+    artDiv.style.animation = '';
+    artDiv.style.borderRadius = '';
+  }
+}
+
+// Audio Events
+audioEl.ontimeupdate = () => {
+  const ct = audioEl.currentTime, dur = audioEl.duration || 0;
+  S.currentTime = ct; S.duration = dur;
+  $('time-current').textContent = fmt(ct);
+  $('time-total').textContent   = fmt(dur);
+  const pct = dur ? (ct/dur*100) : 0;
+  $('seekbar-fill').style.width = pct + '%';
+};
+
+audioEl.onended = () => {
+  S.isPlaying = false;
+  updatePlayBtn(false);
+  if(S.isHost) {
+    if(S.isRepeat && S.currentTrack) {
+      audioEl.currentTime = 0;
+      audioEl.play().catch(()=>{});
+      S.isPlaying = true;
+      updatePlayBtn(true);
+    } else {
+      playNext();
+    }
+  }
+};
+
+audioEl.onplay  = () => { S.isPlaying = true;  updatePlayBtn(true);  };
+audioEl.onpause = () => { S.isPlaying = false; updatePlayBtn(false); };
+
+// Seek
+$('seekbar').onclick = function(e) {
+  if(!S.currentTrack || !S.isHost && S.controlsLocked) return;
+  const rect = this.getBoundingClientRect();
+  const pct  = (e.clientX - rect.left) / rect.width;
+  const time = pct * (audioEl.duration || 0);
+  audioEl.currentTime = time;
+  if(S.isHost) broadcastControl({ type:'SEEK', time });
+  else sendToHost({ action:'CONTROL', payload:{ type:'SEEK', time } });
+};
+$('seekbar').onkeydown = e => {
+  if(e.key==='ArrowLeft')  audioEl.currentTime = Math.max(0, audioEl.currentTime-5);
+  if(e.key==='ArrowRight') audioEl.currentTime = Math.min(audioEl.duration||0, audioEl.currentTime+5);
+};
+
+// Volume
+$('volume-slider').oninput = function() {
+  const v = this.value/100;
+  S.volume = v;
+  audioEl.volume = v;
+  $('vol-display').textContent = this.value + '%';
+  updateVolIcon(v);
+  if(S.isHost) broadcastControl({ type:'VOLUME', volume:v });
+};
+
+$('master-vol-slider').oninput = function() {
+  const v = this.value/100;
+  $('master-vol-display').textContent = this.value + '%';
+  $('volume-slider').value = this.value;
+  $('vol-display').textContent = this.value + '%';
+  S.volume = v; audioEl.volume = v;
+  updateVolIcon(v);
+  if(S.isHost) broadcastControl({ type:'VOLUME', volume:v });
+};
+
+function updateVolIcon(v) {
+  const icon = $('vol-icon');
+  if(v === 0)       icon.className = 'fa-solid fa-volume-xmark';
+  else if(v < 0.4)  icon.className = 'fa-solid fa-volume-off';
+  else if(v < 0.7)  icon.className = 'fa-solid fa-volume-low';
+  else              icon.className = 'fa-solid fa-volume-high';
+}
+
+// Prev/Next/Shuffle/Repeat
+$('btn-next').onclick    = () => { if(S.isHost) playNext(); else sendToHost({action:'CONTROL',payload:{type:'NEXT'}}); };
+$('btn-prev').onclick    = () => { if(S.isHost) playPrev(); else sendToHost({action:'CONTROL',payload:{type:'PREV'}}); };
+$('btn-shuffle').onclick = () => { S.isShuffle=!S.isShuffle; $('btn-shuffle').classList.toggle('active',S.isShuffle); };
+$('btn-repeat').onclick  = () => { S.isRepeat =!S.isRepeat;  $('btn-repeat').classList.toggle('active',S.isRepeat); };
+
+function playNext() {
+  if(!S.queue.length) return;
+  const idx = S.currentTrack ? S.queue.findIndex(t=>t.id===S.currentTrack.id) : -1;
+  let next = S.isShuffle ? rand(S.queue.length) : idx+1;
+  if(next >= S.queue.length) next = 0;
+  dequeueAndPlay(next);
+}
+function playPrev() {
+  if(!S.queue.length) return;
+  const idx = S.currentTrack ? S.queue.findIndex(t=>t.id===S.currentTrack.id) : 0;
+  let prev = idx-1;
+  if(prev < 0) prev = S.queue.length-1;
+  dequeueAndPlay(prev);
+}
+function dequeueAndPlay(idx) {
+  const t = S.queue[idx];
+  if(!t) return;
+  loadTrack(t, true);
+  renderQueue();
+  if(S.isHost) broadcastControl({ type:'QUEUE_SYNC', queue: S.queue.map(sanitizeTrack) });
+}
+
+// Host Controls
+$('btn-mute-all').onclick  = () => { broadcastControl({ type:'VOLUME', volume:0 }); toast('Muted all peers','info'); };
+$('btn-unmute-all').onclick= () => { broadcastControl({ type:'VOLUME', volume:S.volume }); toast('Unmuted all peers','info'); };
+$('btn-stop-all').onclick  = () => {
+  audioEl.pause(); audioEl.currentTime=0; S.isPlaying=false; updatePlayBtn(false);
+  broadcastControl({ type:'STOP' });
+};
+$('lock-controls').onchange= function() {
+  S.controlsLocked = this.checked;
+  broadcastControl({ type:'LOCK', locked: S.controlsLocked });
+  toast(S.controlsLocked ? 'Controls locked to host' : 'Controls unlocked for all','info');
+};
+
+// ── QUEUE ────────────────────────────────────────────────────────
+function sanitizeTrack(t) {
+  return { id:t.id, title:t.title, artist:t.artist, duration:t.duration, type:t.type, art:t.art, ytId:t.ytId, spUrl:t.spUrl };
+}
+
+function addToQueue(track) {
+  if(S.queue.length >= CONFIG.MAX_QUEUE) { toast('Queue is full (5/5)','warn'); return false; }
+  track.id = ++S.trackIdCounter;
+  S.queue.push(track);
+  renderQueue();
+  if(S.isHost) broadcastControl({ type:'QUEUE_SYNC', queue: S.queue.map(sanitizeTrack) });
+  return true;
+}
+
+function syncQueue(remoteQ) {
+  // Keep blobUrls for tracks we already have, add new tracks
+  S.queue = remoteQ.map(rt => {
+    const local = S.queue.find(lt => lt.id === rt.id);
+    return local ? { ...local, ...rt, blobUrl: local.blobUrl } : rt;
+  });
+  renderQueue();
+}
+
+function renderQueue() {
+  const scroll  = $('queue-scroll');
+  const countEl = $('queue-count');
+  countEl.textContent = S.queue.length;
+  scroll.innerHTML = '';
+
+  if(S.queue.length === 0) {
+    scroll.innerHTML = `<div class="queue-empty" id="queue-empty"><i class="fa-regular fa-music" style="font-size:1.3rem"></i>Queue is empty — add tracks!</div>`;
+    return;
+  }
+
+  S.queue.forEach((t, i) => {
+    const isCurrent = S.currentTrack && S.currentTrack.id === t.id;
+    const item = el('div','queue-item' + (isCurrent?' playing-now':''));
+    item.setAttribute('draggable','true');
+    item.setAttribute('data-idx',i);
+    item.setAttribute('role','listitem');
+    item.innerHTML = `
+      <div class="queue-item-art">
+        ${t.art ? `<img src="${t.art}" alt="">` : `<i class="fa-solid ${t.type==='youtube'?'fa-brands fa-youtube':t.type==='spotify'?'fa-brands fa-spotify':'fa-music'}"></i>`}
+      </div>
+      <div class="queue-item-info">
+        <div class="queue-item-title" title="${escHtml(t.title)}">${escHtml(t.title)}</div>
+        <div class="queue-item-dur">${fmt(t.duration)}${isCurrent?' · <span style="color:var(--accent)">Playing</span>':''}</div>
+      </div>
+      <button class="queue-item-remove" onclick="removeFromQueue(${i})" aria-label="Remove ${escHtml(t.title)}"><i class="fa-solid fa-xmark"></i></button>`;
+
+    // Drag events
+    item.ondragstart = e => { e.dataTransfer.setData('text/plain',i); item.classList.add('dragging'); };
+    item.ondragend   = () => item.classList.remove('dragging');
+    item.ondragover  = e => { e.preventDefault(); item.classList.add('drag-over'); };
+    item.ondragleave = () => item.classList.remove('drag-over');
+    item.ondrop      = e => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      const to   = i;
+      if(from !== to) {
+        const moved = S.queue.splice(from,1)[0];
+        S.queue.splice(to,0,moved);
+        renderQueue();
+        if(S.isHost) broadcastControl({ type:'QUEUE_SYNC', queue: S.queue.map(sanitizeTrack) });
+      }
+    };
+    item.ondblclick  = () => { if(S.isHost || !S.controlsLocked) dequeueAndPlay(i); };
+    scroll.appendChild(item);
+  });
+
+  // Add track button
+  if(S.queue.length < CONFIG.MAX_QUEUE) {
+    const addBtn = el('div','queue-add-btn');
+    addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Add Track`;
+    addBtn.onclick = () => {
+      document.querySelector('.source-tab[data-tab="file"]').click();
+      document.getElementById('drop-zone').scrollIntoView({ behavior:'smooth' });
+    };
+    scroll.appendChild(addBtn);
+  } else {
+    const full = el('div','queue-full-msg');
+    full.innerHTML = `<i class="fa-solid fa-circle-info"></i> Queue full (5/5) — remove a track first`;
+    scroll.appendChild(full);
+  }
+}
+
+function removeFromQueue(idx) {
+  if(S.currentTrack && S.queue[idx]?.id === S.currentTrack.id) {
+    audioEl.pause(); S.isPlaying = false; updatePlayBtn(false);
+    S.currentTrack = null;
+    $('track-title').textContent  = 'No track loaded';
+    $('track-artist').textContent = 'Add a track from the panel →';
+    $('track-source-badge').style.display = 'none';
+    $('album-art').innerHTML = `<div class="art-placeholder"><i class="fa-solid fa-compact-disc"></i></div>`;
+  }
+  S.queue.splice(idx,1);
+  renderQueue();
+  if(S.isHost) broadcastControl({ type:'QUEUE_SYNC', queue: S.queue.map(sanitizeTrack) });
+}
+
+$('btn-clear-queue').onclick = () => {
+  if(S.queue.length===0) return;
+  audioEl.pause(); audioEl.src=''; S.isPlaying=false; updatePlayBtn(false);
+  S.currentTrack = null; S.queue = [];
+  renderQueue();
+  if(S.isHost) broadcastControl({ type:'QUEUE_SYNC', queue:[] });
+  toast('Queue cleared','info');
+};
+
+// ── FILE UPLOAD ──────────────────────────────────────────────────
+$('drop-zone').onclick = () => $('file-input').click();
+$('drop-zone').onkeydown = e => { if(e.key==='Enter'||e.key===' ') $('file-input').click(); };
+
+$('drop-zone').ondragover  = e => { e.preventDefault(); $('drop-zone').classList.add('drag-over'); };
+$('drop-zone').ondragleave = ()=> $('drop-zone').classList.remove('drag-over');
+$('drop-zone').ondrop      = e => {
+  e.preventDefault();
+  $('drop-zone').classList.remove('drag-over');
+  processFiles(e.dataTransfer.files);
+};
+
+$('file-input').onchange = e => processFiles(e.target.files);
+
+function processFiles(files) {
+  Array.from(files).slice(0, CONFIG.MAX_QUEUE - S.queue.length).forEach(f => processAudioFile(f));
+}
+
+function processAudioFile(file) {
+  if(!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|ogg|flac|m4a|aac)$/i)) {
+    toast('Unsupported file: ' + file.name, 'error'); return;
+  }
+  const mbSize = file.size / 1024 / 1024;
+  if(mbSize > CONFIG.MAX_FILE_MB) { toast(`File too large (${mbSize.toFixed(1)}MB > ${CONFIG.MAX_FILE_MB}MB)`, 'warn'); return; }
+
+  const wrap = $('upload-progress-wrap');
+  const fill = $('upload-fill');
+  const pct  = $('upload-pct');
+  wrap.classList.remove('hidden');
+
+  const blobUrl = URL.createObjectURL(file);
+  const title   = file.name.replace(/\.[^/.]+$/, '').replace(/_/g,' ');
+  const audio   = new Audio(blobUrl);
+
+  let prog = 0;
+  const interval = setInterval(() => {
+    prog = Math.min(prog + rand(15)+5, 90);
+    fill.style.width = prog + '%';
+    pct.textContent  = prog + '%';
+  }, 120);
+
+  audio.onloadedmetadata = () => {
+    clearInterval(interval);
+    fill.style.width = '100%';
+    pct.textContent  = '100%';
+    setTimeout(() => wrap.classList.add('hidden'), 500);
+
+    const track = {
+      title, artist: 'Local File',
+      duration: audio.duration || 0,
+      blobUrl, type: 'file', art: null,
+    };
+    if(addToQueue(track)) {
+      toast(`Added: ${title}`, 'success');
+      if(!S.currentTrack) dequeueAndPlay(0);
+    }
+  };
+  audio.onerror = () => {
+    clearInterval(interval);
+    wrap.classList.add('hidden');
+    toast('Could not load: ' + file.name, 'error');
+  };
+}
+
+// ── YOUTUBE ──────────────────────────────────────────────────────
+function extractYtId(url) {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+$('btn-add-yt').onclick = async () => {
+  const url = $('yt-url').value.trim();
+  if(!url) { toast('Paste a YouTube URL', 'warn'); return; }
+  const ytId = extractYtId(url);
+  if(!ytId) { toast('Invalid YouTube URL', 'error'); return; }
+
+  $('btn-add-yt').innerHTML = '<span class="spinner"></span>';
+  $('btn-add-yt').disabled  = true;
+
+  try {
+    const oembed = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`);
+    const data   = await oembed.json();
+    const track = {
+      title:    data.title || 'YouTube Video',
+      artist:   data.author_name || 'YouTube',
+      duration: 0,
+      ytId,
+      type: 'youtube',
+      art:  `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`,
+    };
+    if(addToQueue(track)) {
+      toast('Added: ' + track.title, 'success');
+      $('yt-url').value = '';
+      loadYtEmbed(ytId);
+      if(!S.currentTrack) { S.currentTrack = track; updatePlayerTrackInfo(track); }
+    }
+  } catch(e) {
+    toast('Could not load YouTube video', 'error');
+  } finally {
+    $('btn-add-yt').innerHTML = '<i class="fa-solid fa-plus"></i>';
+    $('btn-add-yt').disabled  = false;
+  }
+};
+
+function loadYtEmbed(ytId) {
+  const wrap = $('yt-frame-wrap');
+  wrap.style.display = 'block';
+  wrap.innerHTML = `<iframe id="yt-player" width="100%" height="120" src="https://www.youtube.com/embed/${ytId}?enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+}
+
+// ── SPOTIFY ──────────────────────────────────────────────────────
+$('btn-add-sp').onclick = async () => {
+  const url = $('sp-url').value.trim();
+  if(!url || !url.includes('spotify.com')) { toast('Paste a Spotify track URL', 'warn'); return; }
+
+  $('btn-add-sp').innerHTML = '<span class="spinner"></span>';
+  $('btn-add-sp').disabled  = true;
+
+  try {
+    const oembed = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`);
+    const data   = await oembed.json();
+    const track  = {
+      title:  data.title || 'Spotify Track',
+      artist: data.provider_name || 'Spotify',
+      duration: 30,
+      spUrl: url, type: 'spotify',
+      art: data.thumbnail_url || null,
+    };
+    if(addToQueue(track)) {
+      toast('Added: ' + track.title, 'success');
+      $('sp-url').value = '';
+      loadSpotifyEmbed(url, data.html);
+      if(!S.currentTrack) { S.currentTrack = track; updatePlayerTrackInfo(track); }
+    }
+  } catch(e) {
+    toast('Could not load Spotify track. Check the URL.', 'error');
+  } finally {
+    $('btn-add-sp').innerHTML = '<i class="fa-solid fa-plus"></i>';
+    $('btn-add-sp').disabled  = false;
+  }
+};
+
+function loadSpotifyEmbed(url, html) {
+  const wrap = $('spotify-embed-wrap');
+  const trackId = url.split('/track/')[1]?.split('?')[0];
+  if(trackId) {
+    wrap.style.display = 'block';
+    wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${trackId}" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
+  }
+}
+
+// ── SOURCE TABS ──────────────────────────────────────────────────
+document.querySelectorAll('.source-tab').forEach(btn => {
+  btn.onclick = function() {
+    document.querySelectorAll('.source-tab').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.source-panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    this.setAttribute('aria-selected','true');
+    const tab = document.getElementById('tab-' + this.dataset.tab);
+    if(tab) tab.classList.add('active');
+  };
+});
+
+// ── AUDIO BOX TOGGLE ─────────────────────────────────────────────
+$('audio-box-toggle').onclick = () => {
+  const body    = $('audio-box-body');
+  const chev    = $('audio-box-chevron');
+  const isOpen  = !body.classList.contains('hidden');
+  body.classList.toggle('hidden', isOpen);
+  chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+  $('audio-box-toggle').setAttribute('aria-expanded', !isOpen);
+  if(!isOpen) startVisualizer($('audio-box-canvas'), 'bars', 'box');
+};
+$('audio-box-toggle').onkeydown = e => { if(e.key==='Enter') $('audio-box-toggle').click(); };
+
+// ── LEAVE ROOM ───────────────────────────────────────────────────
+$('btn-leave').onclick = () => {
+  if(confirm('Leave this room?')) leaveRoom();
+};
+$('logo-home').onclick = e => { e.preventDefault(); if(confirm('Return to home?')) leaveRoom(); };
+
+function leaveRoom() {
+  clearInterval(S.heartbeatTimer);
+  S.peerConns.forEach(p => { try { p.conn.close(); } catch(e){} });
+  if(S.hostConn) { try { S.hostConn.close(); } catch(e){} }
+  if(S.peer)     { try { S.peer.destroy(); }   catch(e){} }
+  if(audioEl)    { audioEl.pause(); audioEl.src = ''; }
+
+  // Reset state
+  Object.assign(S, {
+    isHost:false, roomCode:null, peer:null, hostConn:null,
+    peerConns:new Map(), queue:[], currentTrack:null,
+    isPlaying:false, isShuffle:false, isRepeat:false,
+    volume:0.8, controlsLocked:false, trackIdCounter:0,
+  });
+
+  $('app').classList.add('hidden');
+  $('landing').classList.remove('hidden');
+  $('peers-list').innerHTML = '';
+  pendingCode = genCode();
+}
+
+// ── FOOTER STATUS ────────────────────────────────────────────────
+function updateFooterStatus(state) {
+  const dot   = $('footer-dot');
+  const label = $('footer-status-text');
+  const sync  = $('sync-badge');
+  const map   = {
+    connecting:  { color:'var(--amber)',  shadow:'var(--amber)',  text:'Connecting…',    showSync:false },
+    connected:   { color:'var(--accent2)',shadow:'var(--accent2)',text:'Connected',       showSync:true  },
+    disconnected:{ color:'var(--red)',    shadow:'var(--red)',    text:'Disconnected',    showSync:false },
+    idle:        { color:'var(--text-muted)',shadow:'none',       text:'Idle',            showSync:false },
+  };
+  const s = map[state] || map.idle;
+  dot.style.background  = s.color;
+  dot.style.boxShadow   = s.shadow !== 'none' ? `0 0 6px ${s.shadow}` : 'none';
+  label.textContent     = s.text;
+  sync.style.display    = s.showSync ? 'inline-flex' : 'none';
+}
+
+// ── HTML ESCAPE ──────────────────────────────────────────────────
+function escHtml(str) {
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── KEYBOARD SHORTCUTS ───────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if(e.code === 'Space') { e.preventDefault(); $('btn-play-pause').click(); }
+  if(e.code === 'ArrowRight' && e.altKey) $('btn-next').click();
+  if(e.code === 'ArrowLeft'  && e.altKey) $('btn-prev').click();
+  if(e.code === 'KeyM') {
+    const v = audioEl.muted = !audioEl.muted;
+    updateVolIcon(v ? 0 : S.volume);
+  }
+});
+
+// ── INIT ─────────────────────────────────────────────────────────
+(function init() {
+  const savedTheme = localStorage.getItem('ss_theme') || 'dark';
+  applyTheme(savedTheme);
+  renderQueue();
+
+  // Mobile peer list button
+  if(window.innerWidth <= 768) {
+    $('btn-peers-mobile').style.display = 'flex';
+  }
+  window.addEventListener('resize', () => {
+    $('btn-peers-mobile').style.display = window.innerWidth<=768 ? 'flex' : 'none';
+  });
+
+  // Check WebRTC support
+  if(!window.RTCPeerConnection) {
+    toast('Your browser does not support WebRTC. Please use Chrome or Firefox.', 'error', 8000);
+  }
+
+  debug('SyncSounds initialized');
+})();
+</script>
+</body>
+</html>
